@@ -13,7 +13,6 @@ object VirtualClassPath {
             if (it !in inheritanceTrees)
                 addInheritanceTree(it, emptyList())
         }
-        println(classes.size)
     }
     
     fun getClass(name: String): ClassWrapper {
