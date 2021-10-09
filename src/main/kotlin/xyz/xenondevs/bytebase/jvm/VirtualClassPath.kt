@@ -1,6 +1,7 @@
 package xyz.xenondevs.bytebase.jvm
 
 import org.objectweb.asm.ClassReader
+import java.util.*
 
 object VirtualClassPath {
     
@@ -38,11 +39,13 @@ object VirtualClassPath {
             return addInheritanceTree(clazz, knownSubClasses)
         else {
             val inheritanceTree = inheritanceTrees[clazz]!!
-            inheritanceTree.subClasses += knownSubClasses
-            inheritanceTree.superClasses.forEach { superClass ->
-                // The tree has to exist because of the recursive calls in addInheritanceTree
-                val superTree = inheritanceTrees[superClass]!!
-                superTree.subClasses += knownSubClasses
+            if (knownSubClasses.isNotEmpty()) {
+                inheritanceTree.subClasses += knownSubClasses
+                inheritanceTree.superClasses.forEach { superClass ->
+                    // The tree has to exist because of the recursive calls in addInheritanceTree
+                    val superTree = inheritanceTrees[superClass]!!
+                    superTree.subClasses += knownSubClasses
+                }
             }
             return inheritanceTree
         }
@@ -51,11 +54,9 @@ object VirtualClassPath {
     private fun addInheritanceTree(clazz: ClassWrapper, knownSubClasses: List<ClassWrapper>): InheritanceTree {
         val tree = InheritanceTree(clazz)
         tree.subClasses.addAll(knownSubClasses)
-        val subClasses by lazy {
-            if (knownSubClasses.isNotEmpty())
-                return@lazy knownSubClasses.toMutableList().apply { add(clazz) }
-            return@lazy listOf(clazz)
-        }
+        val subClasses = if (knownSubClasses.isNotEmpty())
+            knownSubClasses.toMutableList().apply { add(clazz) }
+        else Collections.singletonList(clazz)
         
         clazz.superName?.let { superName ->
             val superClass = getClass(superName)

@@ -22,8 +22,7 @@ class ClassWrapper(var fileName: String) : ClassNode(Opcodes.ASM9) {
         if (this.name == OBJECT_TYPE || this == clazz)
             return true
         
-        //return getSuperClasses(wrapper).contains(type1)
-        return true
+        return clazz.inheritanceTree.superClasses.contains(this)
     }
     
     override fun hashCode(): Int {
@@ -41,6 +40,6 @@ class ClassWrapper(var fileName: String) : ClassNode(Opcodes.ASM9) {
         return name == other.name && fileName == other.fileName
     }
     
-    override fun toString() = name!!
+    override fun toString() = name ?: fileName
     
 }
