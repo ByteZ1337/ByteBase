@@ -11,6 +11,8 @@ class ClassWrapper(var fileName: String) : ClassNode(Opcodes.ASM9) {
     val originalName = fileName
     val inheritanceTree
         get() = VirtualClassPath.getTree(this)
+    val superClass
+        get() = superName?.let { VirtualClassPath.getClass(superName) }
     
     constructor(fileName: String, byteCode: ByteArray, parsingOptions: Int = ClassReader.SKIP_FRAMES) : this(fileName) {
         ClassReader(byteCode).accept(this, parsingOptions)
@@ -24,6 +26,8 @@ class ClassWrapper(var fileName: String) : ClassNode(Opcodes.ASM9) {
         
         return clazz.inheritanceTree.superClasses.contains(this)
     }
+    
+    fun isInterface() = access and Opcodes.ACC_INTERFACE != 0
     
     override fun hashCode(): Int {
         var result = fileName.hashCode()
