@@ -1,3 +1,3 @@
 # ByteBase
 
-Makes working with jars/asm easier.
+Makes working with bytecode/asm easier.
