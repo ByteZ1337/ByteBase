@@ -1,9 +1,9 @@
 package xyz.xenondevs.bytebase.jvm
 
 import org.objectweb.asm.ClassReader
-import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.ClassNode
+import xyz.xenondevs.bytebase.asm.ClassWriter
 import xyz.xenondevs.bytebase.util.OBJECT_TYPE
 
 class ClassWrapper(var fileName: String) : ClassNode(Opcodes.ASM9) {
@@ -18,7 +18,7 @@ class ClassWrapper(var fileName: String) : ClassNode(Opcodes.ASM9) {
         ClassReader(byteCode).accept(this, parsingOptions)
     }
     
-    fun assemble() = ClassWriter(ClassWriter.COMPUTE_FRAMES).also(this::accept).toByteArray()!!
+    fun assemble() = ClassWriter().also(this::accept).toByteArray()!!
     
     fun isAssignableFrom(clazz: ClassWrapper): Boolean {
         if (this.name == OBJECT_TYPE || this == clazz)

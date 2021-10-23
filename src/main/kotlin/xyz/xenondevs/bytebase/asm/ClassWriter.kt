@@ -5,6 +5,10 @@ import xyz.xenondevs.bytebase.jvm.VirtualClassPath
 import xyz.xenondevs.bytebase.util.OBJECT_TYPE
 import org.objectweb.asm.ClassWriter as AsmClassWriter
 
+/**
+ * Modified ClassWriter implementation to use the [VirtualClassPath]
+ * instead of the default JVM classpath
+ */
 class ClassWriter(flags: Int = COMPUTE_FRAMES) : AsmClassWriter(flags) {
     
     override fun getCommonSuperClass(type1: String, type2: String): String {
