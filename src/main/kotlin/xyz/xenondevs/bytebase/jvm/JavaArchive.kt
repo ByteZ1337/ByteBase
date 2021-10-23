@@ -8,6 +8,7 @@ import java.io.OutputStream
 import java.util.jar.JarEntry
 import java.util.jar.JarInputStream
 import java.util.jar.JarOutputStream
+import java.util.zip.ZipInputStream
 
 private val CLASS_MAGIC = byteArrayOf(-54, -2, -70, -66).asList() //0xCAFEBABE in signed bytes
 
@@ -20,11 +21,12 @@ class JavaArchive() {
     constructor(file: File, parseOptions: Int = SKIP_FRAMES) : this(FileInputStream(file), parseOptions)
     
     constructor(inputStream: InputStream, parseOptions: Int = SKIP_FRAMES) : this() {
-        readFile(if (inputStream is JarInputStream) inputStream else JarInputStream(inputStream), parseOptions)
+        readFile(if (inputStream is ZipInputStream) inputStream else ZipInputStream(inputStream), parseOptions)
     }
     
-    private fun readFile(jis: JarInputStream, parseOptions: Int) {
-        generateSequence(jis::getNextJarEntry).forEach { entry ->
+    private fun readFile(jis: ZipInputStream, parseOptions: Int) {
+        generateSequence(jis::getNextEntry).forEach { entry ->
+            println(entry.name)
             if (entry.isDirectory) { // TODO actually check if the file is a directory
                 directories += entry.name
             } else {
