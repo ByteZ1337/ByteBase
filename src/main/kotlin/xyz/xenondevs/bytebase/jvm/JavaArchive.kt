@@ -6,7 +6,6 @@ import java.io.FileInputStream
 import java.io.InputStream
 import java.io.OutputStream
 import java.util.jar.JarEntry
-import java.util.jar.JarInputStream
 import java.util.jar.JarOutputStream
 import java.util.zip.ZipInputStream
 
