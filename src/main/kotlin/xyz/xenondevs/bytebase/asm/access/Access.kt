@@ -1,5 +1,8 @@
 package xyz.xenondevs.bytebase.asm.access
 
+// TODO move
+fun Int.hasMask(mask: Int) = this and mask == mask
+
 interface Access {
     
     fun isPublic(): Boolean
