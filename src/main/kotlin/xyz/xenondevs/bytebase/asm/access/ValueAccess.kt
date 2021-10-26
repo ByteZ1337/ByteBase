@@ -1,6 +1,7 @@
 package xyz.xenondevs.bytebase.asm.access
 
 import org.objectweb.asm.Opcodes.*
+import xyz.xenondevs.bytebase.util.hasMask
 
 class ValueAccess(private val access: Int) : Access {
     

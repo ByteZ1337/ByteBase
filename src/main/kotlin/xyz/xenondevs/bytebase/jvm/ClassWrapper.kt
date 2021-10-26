@@ -4,11 +4,13 @@ import org.objectweb.asm.ClassReader
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.ClassNode
 import xyz.xenondevs.bytebase.asm.ClassWriter
+import xyz.xenondevs.bytebase.asm.access.ReferencingAccess
 import xyz.xenondevs.bytebase.util.OBJECT_TYPE
 
 class ClassWrapper(var fileName: String) : ClassNode(Opcodes.ASM9) {
     
     val originalName = fileName
+    val accessWrapper = ReferencingAccess({ this.access }, { this.access = it })
     val inheritanceTree
         get() = VirtualClassPath.getTree(this)
     val superClass
@@ -27,7 +29,9 @@ class ClassWrapper(var fileName: String) : ClassNode(Opcodes.ASM9) {
         return clazz.inheritanceTree.superClasses.contains(this)
     }
     
-    fun isInterface() = access and Opcodes.ACC_INTERFACE != 0
+    fun isInterface() = accessWrapper.isInterface()
+    
+    fun isEnum() = accessWrapper.isEnum()
     
     override fun hashCode(): Int {
         var result = fileName.hashCode()
