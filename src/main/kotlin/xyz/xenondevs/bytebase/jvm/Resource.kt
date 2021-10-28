@@ -13,5 +13,5 @@ class Resource(var name: String, var content: ByteArray) {
     }
     
     fun applyConsumer(block: (ByteArray) -> Unit) = block(content)
-
+    
 }

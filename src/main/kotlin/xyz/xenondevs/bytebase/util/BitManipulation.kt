@@ -1,9 +1,13 @@
 package xyz.xenondevs.bytebase.util
 
-fun Int.hasMask(mask: Int) = this and mask == mask
+typealias Int16 = Short
+typealias Int32 = Int
+typealias Int64 = Long
 
-fun Int.setMask(mask: Int, value: Boolean) = if (value) this or mask else this and mask.inv()
+fun Int32.hasMask(mask: Int32) = this and mask == mask
 
-fun Long.hasMask(mask: Long) = this and mask == mask
+fun Int32.setMask(mask: Int32, value: Boolean) = if (value) this or mask else this and mask.inv()
 
-fun Long.setMask(mask: Long, value: Boolean) = if (value) this or mask else this and mask.inv()
+fun Int64.hasMask(mask: Int64) = this and mask == mask
+
+fun Int64.setMask(mask: Int64, value: Boolean) = if (value) this or mask else this and mask.inv()

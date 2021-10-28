@@ -1,6 +1,7 @@
 package xyz.xenondevs.bytebase.jvm
 
 import org.objectweb.asm.ClassReader.SKIP_FRAMES
+import xyz.xenondevs.bytebase.util.Int32
 import java.io.File
 import java.io.FileInputStream
 import java.io.InputStream
@@ -17,13 +18,13 @@ class JavaArchive() {
     val classes = ArrayList<ClassWrapper>()
     val resources = ArrayList<Resource>()
     
-    constructor(file: File, parseOptions: Int = SKIP_FRAMES) : this(FileInputStream(file), parseOptions)
+    constructor(file: File, parseOptions: Int32 = SKIP_FRAMES) : this(FileInputStream(file), parseOptions)
     
-    constructor(inputStream: InputStream, parseOptions: Int = SKIP_FRAMES) : this() {
+    constructor(inputStream: InputStream, parseOptions: Int32 = SKIP_FRAMES) : this() {
         readFile(if (inputStream is ZipInputStream) inputStream else ZipInputStream(inputStream), parseOptions)
     }
     
-    private fun readFile(jis: ZipInputStream, parseOptions: Int) {
+    private fun readFile(jis: ZipInputStream, parseOptions: Int32) {
         generateSequence(jis::getNextEntry).forEach { entry ->
             println(entry.name)
             if (entry.isDirectory) { // TODO actually check if the file is a directory
@@ -71,7 +72,7 @@ class JavaArchive() {
                 writtenEntries += clazz.name
             }
         
-        if(close) jos.close()
+        if (close) jos.close()
     }
     
 }

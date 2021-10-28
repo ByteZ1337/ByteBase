@@ -1,10 +1,11 @@
 package xyz.xenondevs.bytebase.asm.access
 
 import org.objectweb.asm.Opcodes.*
+import xyz.xenondevs.bytebase.util.Int32
 import xyz.xenondevs.bytebase.util.hasMask
 import xyz.xenondevs.bytebase.util.setMask
 
-class ReferencingAccess(val get: () -> Int, val set: (Int) -> Unit) : Access {
+class ReferencingAccess(val get: () -> Int32, val set: (Int32) -> Unit) : Access {
     
     override fun isPublic() = get().hasMask(ACC_PUBLIC)
     
@@ -98,17 +99,17 @@ class ReferencingAccess(val get: () -> Int, val set: (Int) -> Unit) : Access {
     
     fun setModule(value: Boolean = true) = set(get().setMask(ACC_MODULE, value))
     
-    override fun hasFlags(vararg flags: Int): Boolean {
+    override fun hasFlags(vararg flags: Int32): Boolean {
         val mask = flags.reduce { i1, i2 -> i1 or i2 }
         return get().hasMask(mask)
     }
     
-    fun setFlags(vararg flags: Int, value: Boolean = true) {
+    fun setFlags(vararg flags: Int32, value: Boolean = true) {
         val mask = flags.reduce { i1, i2 -> i1 or i2 }
         return set(get().setMask(mask, value))
     }
     
-    override fun none(vararg flags: Int): Boolean {
+    override fun none(vararg flags: Int32): Boolean {
         val access = get()
         return flags.none(access::hasMask)
     }

@@ -1,5 +1,7 @@
 package xyz.xenondevs.bytebase.asm.access
 
+import xyz.xenondevs.bytebase.util.Int32
+
 interface Access {
     
     fun isPublic(): Boolean
@@ -48,8 +50,8 @@ interface Access {
     
     fun isModule(): Boolean
     
-    fun hasFlags(vararg flags: Int): Boolean
+    fun hasFlags(vararg flags: Int32): Boolean
     
-    fun none(vararg flags: Int): Boolean
+    fun none(vararg flags: Int32): Boolean
     
 }

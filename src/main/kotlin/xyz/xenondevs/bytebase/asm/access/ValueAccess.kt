@@ -1,9 +1,10 @@
 package xyz.xenondevs.bytebase.asm.access
 
 import org.objectweb.asm.Opcodes.*
+import xyz.xenondevs.bytebase.util.Int32
 import xyz.xenondevs.bytebase.util.hasMask
 
-class ValueAccess(private val access: Int) : Access {
+class ValueAccess(private val access: Int32) : Access {
     
     override fun isPublic() = access.hasMask(ACC_PUBLIC)
     
@@ -51,12 +52,12 @@ class ValueAccess(private val access: Int) : Access {
     
     override fun isModule() = access.hasMask(ACC_MODULE)
     
-    override fun hasFlags(vararg flags: Int): Boolean {
+    override fun hasFlags(vararg flags: Int32): Boolean {
         val mask = flags.reduce { i1, i2 -> i1 or i2 }
         return access.hasMask(mask)
     }
     
-    override fun none(vararg flags: Int) = flags.none(access::hasMask)
+    override fun none(vararg flags: Int32) = flags.none(access::hasMask)
     
     fun isPublicClass() = !isEnum() && !isInterface() && isPublic()
 }

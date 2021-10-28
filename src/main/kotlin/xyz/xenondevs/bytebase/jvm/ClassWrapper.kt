@@ -4,19 +4,20 @@ import org.objectweb.asm.ClassReader
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.ClassNode
 import xyz.xenondevs.bytebase.asm.ClassWriter
+import xyz.xenondevs.bytebase.asm.OBJECT_TYPE
 import xyz.xenondevs.bytebase.asm.access.ReferencingAccess
-import xyz.xenondevs.bytebase.util.OBJECT_TYPE
+import xyz.xenondevs.bytebase.util.Int32
 
 class ClassWrapper(var fileName: String) : ClassNode(Opcodes.ASM9) {
     
     val originalName = fileName
-    val accessWrapper = ReferencingAccess({ this.access }, { this.access = it })
+    val accessWrapper = ReferencingAccess(::access) { this.access = it }
     val inheritanceTree
         get() = VirtualClassPath.getTree(this)
     val superClass
         get() = superName?.let { VirtualClassPath.getClass(superName) }
     
-    constructor(fileName: String, byteCode: ByteArray, parsingOptions: Int = ClassReader.SKIP_FRAMES) : this(fileName) {
+    constructor(fileName: String, byteCode: ByteArray, parsingOptions: Int32 = ClassReader.SKIP_FRAMES) : this(fileName) {
         ClassReader(byteCode).accept(this, parsingOptions)
     }
     

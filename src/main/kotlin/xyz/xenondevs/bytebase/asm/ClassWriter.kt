@@ -2,14 +2,14 @@ package xyz.xenondevs.bytebase.asm
 
 import xyz.xenondevs.bytebase.jvm.ClassWrapper
 import xyz.xenondevs.bytebase.jvm.VirtualClassPath
-import xyz.xenondevs.bytebase.util.OBJECT_TYPE
+import xyz.xenondevs.bytebase.util.Int32
 import org.objectweb.asm.ClassWriter as AsmClassWriter
 
 /**
  * Modified ClassWriter implementation to use the [VirtualClassPath]
  * instead of the default JVM classpath
  */
-class ClassWriter(flags: Int = COMPUTE_FRAMES) : AsmClassWriter(flags) {
+class ClassWriter(flags: Int32 = COMPUTE_FRAMES) : AsmClassWriter(flags) {
     
     override fun getCommonSuperClass(type1: String, type2: String): String {
         if (OBJECT_TYPE == type1 || OBJECT_TYPE == type2)
