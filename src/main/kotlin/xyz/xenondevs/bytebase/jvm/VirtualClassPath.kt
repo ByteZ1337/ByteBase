@@ -22,9 +22,7 @@ object VirtualClassPath {
             classes[name]?.let { return it }
             
             // The ClassWrapper was not found in the cache. So we check if the jvm knows this class
-            val wrapper = ClassWrapper("${name.replace('.', '/')}.class").also {
-                ClassReader(name).accept(it, ClassReader.SKIP_FRAMES)
-            }
+            val wrapper = ClassWrapper("${name.replace('.', '/')}.class", ClassReader(name))
             classes[wrapper.name] = wrapper
             return wrapper
         } catch (ex: Exception) {
