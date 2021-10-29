@@ -5,6 +5,7 @@ import java.util.*
 
 object VirtualClassPath {
     
+    val classLoader = ClassWrapperLoader(javaClass.classLoader)
     val classes = HashMap<String, ClassWrapper>()
     val inheritanceTrees = HashMap<ClassWrapper, InheritanceTree>()
     
