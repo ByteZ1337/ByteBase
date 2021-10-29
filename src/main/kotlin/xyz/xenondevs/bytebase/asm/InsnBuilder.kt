@@ -391,6 +391,11 @@ class InsnBuilder {
     
     //</editor-fold>
     
+    fun print(text: String) {
+        getStatic("java/lang/System", "out", "Ljava/io/PrintStream;")
+        ldc(text)
+        invokeVirtual("java/io/PrintStream", "println", "(Ljava/lang/String;)V")
+    }
 }
 
 
