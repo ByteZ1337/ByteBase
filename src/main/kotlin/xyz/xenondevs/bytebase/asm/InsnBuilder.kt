@@ -394,4 +394,4 @@ class InsnBuilder {
 }
 
 
-fun buildInsnList(builder: InsnBuilder.() -> Unit) = InsnBuilder().also(builder).list
+fun buildInsnList(builder: InsnBuilder.() -> Unit) = InsnBuilder().apply(builder).list
