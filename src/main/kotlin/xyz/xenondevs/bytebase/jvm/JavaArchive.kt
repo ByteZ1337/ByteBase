@@ -26,7 +26,6 @@ class JavaArchive() {
     
     private fun readFile(jis: ZipInputStream, parseOptions: Int32) {
         generateSequence(jis::getNextEntry).forEach { entry ->
-            println(entry.name)
             if (entry.isDirectory) { // TODO actually check if the file is a directory
                 directories += entry.name
             } else {
