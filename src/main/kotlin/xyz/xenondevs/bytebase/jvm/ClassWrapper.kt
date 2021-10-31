@@ -4,6 +4,7 @@ import org.objectweb.asm.ClassReader
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.ClassNode
 import xyz.xenondevs.bytebase.asm.ClassWriter
+import xyz.xenondevs.bytebase.asm.OBJECT_CLASS
 import xyz.xenondevs.bytebase.asm.OBJECT_TYPE
 import xyz.xenondevs.bytebase.asm.access.ReferencingAccess
 import xyz.xenondevs.bytebase.util.Int32
@@ -23,7 +24,7 @@ class ClassWrapper : ClassNode {
         this.fileName = fileName
         this.originalName = fileName
         this.name = fileName.removeSuffix(".class")
-        this.version = VirtualClassPath.getClass(OBJECT_TYPE).version
+        this.version = OBJECT_CLASS.version
         this.superName = OBJECT_TYPE
     }
     
