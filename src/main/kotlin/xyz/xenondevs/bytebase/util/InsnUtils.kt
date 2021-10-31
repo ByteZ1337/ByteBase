@@ -6,7 +6,7 @@ import org.objectweb.asm.tree.InsnNode
 import org.objectweb.asm.tree.IntInsnNode
 import org.objectweb.asm.tree.LdcInsnNode
 
-fun Int32.toLdcInsn(): AbstractInsnNode {
+fun Int.toLdcInsn(): AbstractInsnNode {
     return when (this) {
         in -1..5 -> InsnNode(this + 3)
         in Byte.MIN_VALUE..Byte.MAX_VALUE -> IntInsnNode(Opcodes.BIPUSH, this)
@@ -15,28 +15,28 @@ fun Int32.toLdcInsn(): AbstractInsnNode {
     }
 }
 
-val AbstractInsnNode.intValue: Int32
+val AbstractInsnNode.intValue: Int
     get() {
         return when {
             this.opcode in Opcodes.ICONST_M1..Opcodes.ICONST_5 -> this.opcode - 3
             this is IntInsnNode && (this.opcode == Opcodes.BIPUSH || this.opcode == Opcodes.SIPUSH) -> this.operand
-            this is LdcInsnNode && this.cst is Int32 -> this.cst as Int32
+            this is LdcInsnNode && this.cst is Int -> this.cst as Int
             else -> error("The given instruction is not an integer")
         }
     }
 
-fun Int64.toLdcInsn(): AbstractInsnNode {
+fun Long.toLdcInsn(): AbstractInsnNode {
     return when (this) {
         in 0..1 -> InsnNode((this + 9).toInt())
         else -> LdcInsnNode(this)
     }
 }
 
-val AbstractInsnNode.longValue: Int64
+val AbstractInsnNode.longValue: Long
     get() {
         return when {
             this.opcode in Opcodes.LCONST_0..Opcodes.LCONST_1 -> (this.opcode - 9).toLong()
-            this is LdcInsnNode && this.cst is Int64 -> this.cst as Int64
+            this is LdcInsnNode && this.cst is Long -> this.cst as Long
             else -> error("The given instruction is not a long")
         }
     }
