@@ -61,7 +61,7 @@ local.properties
 # IntelliJ
 build
 *out
-/src/test
+/ByteBase/src/test
 
 # mpeltonen/sbt-idea plugin
 .idea_modules/
