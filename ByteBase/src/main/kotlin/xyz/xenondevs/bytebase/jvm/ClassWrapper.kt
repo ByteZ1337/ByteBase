@@ -3,6 +3,8 @@ package xyz.xenondevs.bytebase.jvm
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.ClassNode
+import org.objectweb.asm.tree.FieldNode
+import org.objectweb.asm.tree.MethodNode
 import xyz.xenondevs.bytebase.asm.ClassWriter
 import xyz.xenondevs.bytebase.asm.OBJECT_CLASS
 import xyz.xenondevs.bytebase.asm.OBJECT_TYPE
@@ -17,6 +19,8 @@ class ClassWrapper : ClassNode {
     val accessWrapper = ReferencingAccess(::access) { this.access = it }
     val inheritanceTree
         get() = VirtualClassPath.getTree(this)
+    val subClasses
+        get() = inheritanceTree.subClasses
     val superClass
         get() = superName?.let { VirtualClassPath.getClass(superName) }
     
@@ -40,6 +44,18 @@ class ClassWrapper : ClassNode {
     fun assemble() = ClassWriter().also(this::accept).toByteArray()!!
     
     fun load() = VirtualClassPath.classLoader.loadClass(this)
+    
+    fun getField(name: String, desc: String) = fields?.find { it.name == name && it.desc == desc }
+    
+    fun getField(name: String) = fields?.find { it.name == name }
+    
+    operator fun contains(field: FieldNode) = getField(field.name, field.desc) != null
+    
+    fun getMethod(name: String, desc: String) = methods?.find { it.name == name && it.desc == desc }
+    
+    fun getMethod(name: String) = methods?.find { it.name == name }
+    
+    operator fun contains(method: MethodNode) = getMethod(method.name, method.desc) != null
     
     fun isAssignableFrom(clazz: ClassWrapper): Boolean {
         if (this.name == OBJECT_TYPE || this == clazz)
