@@ -4,11 +4,12 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>xyz.xenondevs</groupId>
+    <groupId>xyz.xenondevs.bytebase</groupId>
     <artifactId>ByteBase-Parent</artifactId>
     <version>0.1-SNAPSHOT</version>
     <modules>
         <module>ByteBase</module>
+        <module>ByteBase-Runtime</module>
     </modules>
     <packaging>pom</packaging>
 
