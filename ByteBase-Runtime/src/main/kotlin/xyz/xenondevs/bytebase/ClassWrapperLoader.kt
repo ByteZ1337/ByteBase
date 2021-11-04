@@ -1,4 +1,6 @@
-package xyz.xenondevs.bytebase.jvm
+package xyz.xenondevs.bytebase
+
+import xyz.xenondevs.bytebase.jvm.ClassWrapper
 
 class ClassWrapperLoader(parent: ClassLoader) : ClassLoader(parent) {
     fun loadClass(clazz: ClassWrapper): Class<*> {
@@ -8,4 +10,9 @@ class ClassWrapperLoader(parent: ClassLoader) : ClassLoader(parent) {
         val bytecode = clazz.assemble()
         return defineClass(clazz.name, bytecode, 0, bytecode.size)
     }
+    
+    companion object {
+        val DEFAULT = ClassWrapperLoader(this::class.java.classLoader)
+    }
+    
 }

@@ -43,8 +43,6 @@ class ClassWrapper : ClassNode {
     
     fun assemble() = ClassWriter().also(this::accept).toByteArray()!!
     
-    fun load() = VirtualClassPath.classLoader.loadClass(this)
-    
     fun getField(name: String, desc: String) = fields?.find { it.name == name && it.desc == desc }
     
     fun getField(name: String) = fields?.find { it.name == name }

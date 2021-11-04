@@ -22,3 +22,7 @@ fun Class<*>.setInstructions(method: String, instructions: InsnList) {
     wrapper.getMethod(method)!!.instructions = instructions
     INSTRUMENTATION.redefineClasses(ClassDefinition(this, wrapper.assemble()))
 }
+
+fun ClassWrapper.load(): Class<*> {
+    return ClassWrapperLoader.DEFAULT.loadClass(this)
+}
