@@ -396,6 +396,12 @@ class InsnBuilder {
         ldc(text)
         invokeVirtual("java/io/PrintStream", "println", "(Ljava/lang/String;)V")
     }
+    
+    fun printFromStack(type: String = "Ljava/lang/Object;") {
+        getStatic("java/lang/System", "out", "Ljava/io/PrintStream;")
+        swap()
+        invokeVirtual("java/io/PrintStream", "println", "($type)V")
+    }
 }
 
 
