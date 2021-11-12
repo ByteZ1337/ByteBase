@@ -23,6 +23,12 @@ fun Class<*>.setInstructions(method: String, instructions: InsnList) {
     INSTRUMENTATION.redefineClasses(ClassDefinition(this, wrapper.assemble()))
 }
 
+fun Class<*>.insertInstructions(method: String, instructions: InsnList) {
+    val wrapper = VirtualClassPath.getClass(this.internalName)
+    wrapper.getMethod(method)!!.instructions.insert(instructions)
+    INSTRUMENTATION.redefineClasses(ClassDefinition(this, wrapper.assemble()))
+}
+
 fun ClassWrapper.load(): Class<*> {
     return ClassWrapperLoader.DEFAULT.loadClass(this)
 }

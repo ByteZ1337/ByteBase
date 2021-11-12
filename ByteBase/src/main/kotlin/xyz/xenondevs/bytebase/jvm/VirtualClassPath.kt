@@ -18,15 +18,26 @@ object VirtualClassPath {
     
     fun getClass(name: String): ClassWrapper {
         try {
-            classes[name]?.let { return it }
+            val internalName = name.replace('.', '/')
+            classes[internalName]?.let { return it }
             
             // The ClassWrapper was not found in the cache. So we check if the jvm knows this class
-            val wrapper = ClassWrapper("${name.replace('.', '/')}.class", ClassReader(name))
+            // and if so, we create a new ClassWrapper and add it to the cache.
+            val systemStream = ClassLoader.getSystemResourceAsStream("$internalName.class")
+                ?: javaClass.classLoader.getResourceAsStream("$internalName.class")
+                    // Neither the System ClassLoader nor the current ClassLoader knows this class
+                ?: throw ClassNotFoundException("$name not found! Did you add all dependencies?")
+            
+            val wrapper = ClassWrapper("$internalName.class", ClassReader(systemStream))
             classes[wrapper.name] = wrapper
             return wrapper
         } catch (ex: Exception) {
-            throw IllegalStateException("$name not found! Did you add all dependencies?", ex)
+            throw IllegalStateException("An error occurred while trying to load $name", ex)
         }
+    }
+    
+    fun getClassWrapper(clazz: Class<*>): ClassWrapper {
+        return getClass(clazz.name)
     }
     
     fun getTree(clazz: ClassWrapper, vararg knownSubClasses: ClassWrapper) = getTree(clazz, knownSubClasses.asList())
