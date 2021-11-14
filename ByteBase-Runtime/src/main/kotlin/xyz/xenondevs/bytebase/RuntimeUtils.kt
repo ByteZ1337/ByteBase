@@ -8,10 +8,9 @@ import xyz.xenondevs.bytebase.util.internalName
 import java.lang.instrument.ClassDefinition
 import java.lang.instrument.Instrumentation
 
-typealias ClassTransformer = ClassWrapper.() -> Unit
 val INSTRUMENTATION: Instrumentation by lazy { ByteBuddyAgent.install() }
 
-fun Class<*>.redefine(transformer: ClassTransformer) {
+fun Class<*>.redefine(transformer: ClassWrapper.() -> Unit) {
     val wrapper = VirtualClassPath.getClass(this.internalName)
     wrapper.transformer()
     INSTRUMENTATION.redefineClasses(ClassDefinition(this, wrapper.assemble()))
