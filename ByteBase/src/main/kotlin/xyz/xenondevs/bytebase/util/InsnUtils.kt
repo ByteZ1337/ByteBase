@@ -1,10 +1,7 @@
 package xyz.xenondevs.bytebase.util
 
 import org.objectweb.asm.Opcodes
-import org.objectweb.asm.tree.AbstractInsnNode
-import org.objectweb.asm.tree.InsnNode
-import org.objectweb.asm.tree.IntInsnNode
-import org.objectweb.asm.tree.LdcInsnNode
+import org.objectweb.asm.tree.*
 
 fun Int.toLdcInsn(): AbstractInsnNode {
     return when (this) {
@@ -72,3 +69,15 @@ val AbstractInsnNode.doubleValue: Double
             else -> error("The given instruction is not a double")
         }
     }
+
+fun InsnList.remove(vararg insn: AbstractInsnNode) = insn.forEach(this::remove)
+
+fun InsnList.replace(insn: AbstractInsnNode, replacement: AbstractInsnNode) {
+    insertBefore(insn, replacement)
+    remove(insn)
+}
+
+fun InsnList.replace(insn: AbstractInsnNode, replacement: InsnList) {
+    insertBefore(insn, replacement)
+    remove(insn)
+}
