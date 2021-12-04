@@ -4,8 +4,9 @@ import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.Label
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
-import org.objectweb.asm.commons.ClassRemapper as ASMClassRemapper
+import xyz.xenondevs.bytebase.jvm.ClassWrapper
 import xyz.xenondevs.bytebase.jvm.JavaArchive
+import org.objectweb.asm.commons.ClassRemapper as ASMClassRemapper
 
 /**
  * Class that automatically applies mappings
@@ -23,7 +24,7 @@ class Refactorer(private val jar: JavaArchive, private val mappings: Map<String,
     val remapper = MemberRemapper(mappings)
     
     inner class ClassRemapper(classVisitor: ClassVisitor) : ASMClassRemapper(classVisitor, remapper) {
-    
+        
         override fun visitMethod(access: Int, name: String, descriptor: String, signature: String, exceptions: Array<out String>): MethodVisitor? {
             val basicRemapper = super.visitMethod(access, name, descriptor, signature, exceptions)
             return if (basicRemapper == null) null else MethodRemapper(basicRemapper, className, descriptor, name)
@@ -36,7 +37,7 @@ class Refactorer(private val jar: JavaArchive, private val mappings: Map<String,
         val owner: String,
         val desc: String,
         val name: String
-    ) : MethodVisitor(Opcodes.ASM9, methodVisitor){
+    ) : MethodVisitor(Opcodes.ASM9, methodVisitor) {
         
         override fun visitLocalVariable(name: String, descriptor: String, signature: String, start: Label, end: Label, index: Int) {
             super.visitLocalVariable(
@@ -45,6 +46,22 @@ class Refactorer(private val jar: JavaArchive, private val mappings: Map<String,
             )
         }
         
+    }
+    
+    fun refactor() {
+        val newClasses = mutableListOf<ClassWrapper>()
+        
+        jar.classes.forEach { clazz ->
+            val newClass = ClassWrapper(clazz.name)
+            clazz.accept(ClassRemapper(newClass))
+            newClass.fileName = newClass.name + ".class"
+            if (!newClass.sourceFile.isNullOrBlank())
+                newClass.sourceFile = "${clazz.className}.java"
+            newClass.sourceDebug = null
+            newClasses.add(newClass)
+        }
+        jar.classes.clear()
+        jar.classes.addAll(newClasses)
     }
     
 }

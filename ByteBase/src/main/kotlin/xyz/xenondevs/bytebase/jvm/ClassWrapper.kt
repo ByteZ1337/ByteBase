@@ -23,6 +23,8 @@ class ClassWrapper : ClassNode {
         get() = inheritanceTree.subClasses
     val superClass
         get() = superName?.let { VirtualClassPath.getClass(superName) }
+    val className
+        get() = name.substringAfter('/')
     
     constructor(fileName: String) : super(Opcodes.ASM9) {
         this.fileName = fileName
