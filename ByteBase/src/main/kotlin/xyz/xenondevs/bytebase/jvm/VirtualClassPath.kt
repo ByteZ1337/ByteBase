@@ -25,7 +25,7 @@ object VirtualClassPath {
             // and if so, we create a new ClassWrapper and add it to the cache.
             val systemStream = ClassLoader.getSystemResourceAsStream("$internalName.class")
                 ?: javaClass.classLoader.getResourceAsStream("$internalName.class")
-                    // Neither the System ClassLoader nor the current ClassLoader knows this class
+                // Neither the System ClassLoader nor the current ClassLoader knows this class
                 ?: throw ClassNotFoundException("$name not found! Did you add all dependencies?")
             
             val wrapper = ClassWrapper("$internalName.class", ClassReader(systemStream))

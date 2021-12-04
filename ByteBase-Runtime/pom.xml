@@ -13,9 +13,9 @@
     <artifactId>ByteBase-Runtime</artifactId>
 
     <properties>
-        <maven.compiler.source>16</maven.compiler.source>
-        <maven.compiler.target>16</maven.compiler.target>
-        <kotlin.version>1.5.30</kotlin.version>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <kotlin.version>1.6.0</kotlin.version>
     </properties>
 
     <build>
@@ -51,7 +51,7 @@
         <dependency>
             <groupId>net.bytebuddy</groupId>
             <artifactId>byte-buddy-agent</artifactId>
-            <version>1.11.22</version>
+            <version>1.12.2</version>
         </dependency>
         <dependency>
             <groupId>xyz.xenondevs.bytebase</groupId>

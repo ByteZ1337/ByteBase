@@ -13,9 +13,9 @@
     <artifactId>ByteBase</artifactId>
 
     <properties>
-        <maven.compiler.source>16</maven.compiler.source>
-        <maven.compiler.target>16</maven.compiler.target>
-        <kotlin.version>1.5.30</kotlin.version>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <kotlin.version>1.6.0</kotlin.version>
     </properties>
 
     <build>
