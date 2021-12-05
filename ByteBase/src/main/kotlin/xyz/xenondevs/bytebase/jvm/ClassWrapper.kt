@@ -13,16 +13,50 @@ import xyz.xenondevs.bytebase.util.Int32
 
 class ClassWrapper : ClassNode {
     
+    /**
+     * The file name of the class.
+     */
     var fileName: String
+    
+    /**
+     * The original [fileName] of the class.
+     */
     val originalName: String
     
+    /**
+     * Access flags of the class enclosed in a [ReferencingAccess] object
+     * for easier flag manipulation.
+     */
     val accessWrapper = ReferencingAccess(::access) { this.access = it }
+    
+    /**
+     * The [InheritanceTree] of this class. Contains all known inheriting and
+     * implementing classes.
+     */
     val inheritanceTree
         get() = VirtualClassPath.getTree(this)
+    
+    /**
+     * All classes that inherit from this class
+     */
     val subClasses
         get() = inheritanceTree.subClasses
+    
+    /**
+     * All classes that this class inherits from
+     */
+    val superClasses
+        get() = inheritanceTree.superClasses
+    
+    /**
+     * Only represents the direct super class, not the super classes of the super class nor any interfaces.
+     */
     val superClass
         get() = superName?.let { VirtualClassPath.getClass(superName) }
+    
+    /**
+     * The name of the class without the package
+     */
     val className
         get() = name.substringAfter('/')
     
