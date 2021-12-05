@@ -41,8 +41,8 @@ class Refactorer(private val jar: JavaArchive, private val mappings: Map<String,
         
         override fun visitLocalVariable(name: String, descriptor: String, signature: String?, start: Label, end: Label, index: Int) {
             super.visitLocalVariable(
-                remapper.mapLocalVariableName(owner, this.name, this.desc, name, desc),
-                desc, signature, start, end, index
+                remapper.mapLocalVariableName(owner, this.name, this.desc, name, descriptor),
+                descriptor, signature, start, end, index
             )
         }
         

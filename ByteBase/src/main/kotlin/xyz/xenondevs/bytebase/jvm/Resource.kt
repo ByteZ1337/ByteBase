@@ -3,6 +3,8 @@ package xyz.xenondevs.bytebase.jvm
 class Resource(var name: String, var content: ByteArray) {
     
     val originalName = name
+    val fileExtension
+        get() = name.substringAfterLast(".")
     
     constructor(name: String) : this(name, ByteArray(0))
     
