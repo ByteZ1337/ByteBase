@@ -25,7 +25,7 @@ class Refactorer(private val jar: JavaArchive, private val mappings: Map<String,
     
     inner class ClassRemapper(classVisitor: ClassVisitor) : ASMClassRemapper(classVisitor, remapper) {
         
-        override fun visitMethod(access: Int, name: String, descriptor: String, signature: String, exceptions: Array<out String>): MethodVisitor? {
+        override fun visitMethod(access: Int, name: String, descriptor: String, signature: String?, exceptions: Array<out String>?): MethodVisitor? {
             val basicRemapper = super.visitMethod(access, name, descriptor, signature, exceptions)
             return if (basicRemapper == null) null else MethodRemapper(basicRemapper, className, descriptor, name)
         }
@@ -39,7 +39,7 @@ class Refactorer(private val jar: JavaArchive, private val mappings: Map<String,
         val name: String
     ) : MethodVisitor(Opcodes.ASM9, methodVisitor) {
         
-        override fun visitLocalVariable(name: String, descriptor: String, signature: String, start: Label, end: Label, index: Int) {
+        override fun visitLocalVariable(name: String, descriptor: String, signature: String?, start: Label, end: Label, index: Int) {
             super.visitLocalVariable(
                 remapper.mapLocalVariableName(owner, this.name, this.desc, name, desc),
                 desc, signature, start, end, index
