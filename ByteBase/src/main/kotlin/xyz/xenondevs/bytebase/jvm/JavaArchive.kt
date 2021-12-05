@@ -43,6 +43,7 @@ class JavaArchive() {
     fun write(outputStream: OutputStream, close: Boolean = true, writtenEntries: HashSet<String> = HashSet()) {
         val jos = if (outputStream is JarOutputStream) outputStream else JarOutputStream(outputStream)
         
+        directories.removeAll { dir -> classes.none { it.name.startsWith(dir) } && resources.none { it.name.startsWith(dir) } }
         directories.asSequence()
             .filterNot(writtenEntries::contains)
             .forEach { dir ->
