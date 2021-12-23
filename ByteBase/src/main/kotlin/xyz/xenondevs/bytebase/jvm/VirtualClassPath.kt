@@ -11,8 +11,10 @@ object VirtualClassPath {
     fun loadJar(jar: JavaArchive) {
         jar.classes.forEach {
             classes[it.name] = it
-            if (it !in inheritanceTrees)
-                addInheritanceTree(it, emptyList())
+        }
+        // Separate run because getTree indirectly calls getClass
+        jar.classes.filterNot(inheritanceTrees::contains).forEach {
+            addInheritanceTree(it, emptyList())
         }
     }
     
