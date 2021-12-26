@@ -18,6 +18,12 @@ class JavaArchive() {
     val classes = ArrayList<ClassWrapper>()
     val resources = ArrayList<Resource>()
     
+    /**
+     * A list of directories containing at least one class file
+     */
+    val packages: List<String>
+        get() = directories.filter { dir -> classes.any { it.name.startsWith(dir) } }
+    
     constructor(file: File, parseOptions: Int32 = SKIP_FRAMES) : this(FileInputStream(file), parseOptions)
     
     constructor(inputStream: InputStream, parseOptions: Int32 = SKIP_FRAMES) : this() {
