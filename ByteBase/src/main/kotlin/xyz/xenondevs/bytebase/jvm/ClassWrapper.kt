@@ -58,7 +58,7 @@ class ClassWrapper : ClassNode {
      * The name of the class without the package
      */
     val className
-        get() = name.substringAfter('/')
+        get() = name.substringAfterLast('/')
     
     constructor(fileName: String) : super(Opcodes.ASM9) {
         this.fileName = fileName
