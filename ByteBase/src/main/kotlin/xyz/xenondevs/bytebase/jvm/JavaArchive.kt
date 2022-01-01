@@ -12,7 +12,7 @@ import java.util.zip.ZipInputStream
 
 private val CLASS_MAGIC = byteArrayOf(-54, -2, -70, -66).asList() //0xCAFEBABE in signed bytes
 
-class JavaArchive() {
+open class JavaArchive() {
     
     val directories = ArrayList<String>()
     val classes = ArrayList<ClassWrapper>()

@@ -16,7 +16,7 @@ class ClassWriter(flags: Int32 = COMPUTE_FRAMES) : AsmClassWriter(flags) {
             return OBJECT_TYPE
         
         val type1Class = VirtualClassPath.getClass(type1)
-        val type2Class = VirtualClassPath.getClass(type1)
+        val type2Class = VirtualClassPath.getClass(type2)
         
         val firstCommon = findCommonSuperName(type1Class, type2Class)
         val secondCommon = findCommonSuperName(type2Class, type1Class)
@@ -41,10 +41,10 @@ class ClassWriter(flags: Int32 = COMPUTE_FRAMES) : AsmClassWriter(flags) {
         if (class1.isInterface() || class2.isInterface())
             return OBJECT_TYPE
         
-        var new: ClassWrapper
-        do {
-            new = class1.superClass!!
-        } while (!new.isAssignableFrom(class2))
+        var new = class1.superClass!!
+        while (!new.isAssignableFrom(class2)) {
+            new = new.superClass!!
+        }
         
         return new.name
     }
