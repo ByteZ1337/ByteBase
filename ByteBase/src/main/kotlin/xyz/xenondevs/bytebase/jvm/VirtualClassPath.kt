@@ -5,17 +5,52 @@ import java.util.*
 
 object VirtualClassPath {
     
+    val knownJars = ArrayList<JavaArchive>()
+    
     val classes = HashMap<String, ClassWrapper>()
     val inheritanceTrees = HashMap<ClassWrapper, InheritanceTree>()
     
+    /**
+     * Loads a [JavaArchive] into the VirtualClassPath. Please note that this will replace classes in the VirtualClassPath
+     * if a conflict occurs. If you want to load multiple Jars at once, use [loadJarWithDependencies] instead.
+     */
     fun loadJar(jar: JavaArchive) {
         jar.classes.forEach {
             classes[it.name] = it
         }
         // Separate run because getTree indirectly calls getClass
-        jar.classes.filterNot(inheritanceTrees::contains).forEach {
-            addInheritanceTree(it, emptyList())
+        jar.classes.forEach {
+            if (it !in inheritanceTrees)
+                addInheritanceTree(it, emptyList())
         }
+        knownJars.add(jar)
+    }
+    
+    /**
+     * Loads multiple [JavaArchive]s into the VirtualClassPath. Please note that this will replace classes in the VirtualClassPath
+     * if a conflict occurs. The order of the Jars is important to ensure that the correct classes are loaded when multiple Jars
+     * contain a class with the same name. **Also clears [knownJars]!**
+     */
+    fun loadJarWithDependencies(jar: JavaArchive, libraries: List<JavaArchive>, fromReload: Boolean = false) {
+        libraries.forEach { lib ->
+            lib.classes.filter { it.name !in classes }.forEach { classes[it.name] = it }
+        }
+        loadJar(jar)
+        if (!fromReload) {
+            knownJars.clear()
+            knownJars.add(jar)
+            knownJars.addAll(libraries)
+        }
+    }
+    
+    /**
+     * Clears the [classes] and [inheritanceTrees] maps. And loads all [knownJars]. Please note that this will not
+     * reload classes that weren't loaded with [loadJar] or [loadJarWithDependencies].
+     */
+    fun reload() {
+        classes.clear()
+        inheritanceTrees.clear()
+        loadJarWithDependencies(knownJars.first(), knownJars.drop(1), fromReload = true)
     }
     
     fun getClass(name: String): ClassWrapper {
