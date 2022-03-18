@@ -29,7 +29,9 @@ object VirtualClassPath {
     /**
      * Loads multiple [JavaArchive]s into the VirtualClassPath. Please note that this will replace classes in the VirtualClassPath
      * if a conflict occurs. The order of the Jars is important to ensure that the correct classes are loaded when multiple Jars
-     * contain a class with the same name. **Also clears [knownJars]!**
+     * contain a class with the same name.
+     *
+     * **Also clears [knownJars]!**
      */
     fun loadJarWithDependencies(jar: JavaArchive, libraries: List<JavaArchive>, fromReload: Boolean = false) {
         libraries.forEach { lib ->

@@ -2,6 +2,8 @@ package xyz.xenondevs.bytebase.jvm
 
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.Opcodes
+import org.objectweb.asm.Opcodes.ACC_PUBLIC
+import org.objectweb.asm.Opcodes.ACC_STATIC
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.FieldNode
 import org.objectweb.asm.tree.MethodNode
@@ -9,6 +11,7 @@ import xyz.xenondevs.bytebase.asm.ClassWriter
 import xyz.xenondevs.bytebase.asm.OBJECT_CLASS
 import xyz.xenondevs.bytebase.asm.OBJECT_TYPE
 import xyz.xenondevs.bytebase.asm.access.ReferencingAccess
+import xyz.xenondevs.bytebase.asm.buildInsnList
 import xyz.xenondevs.bytebase.util.Int32
 
 class ClassWrapper : ClassNode {
@@ -88,6 +91,15 @@ class ClassWrapper : ClassNode {
     fun getMethod(name: String, desc: String) = methods?.find { it.name == name && it.desc == desc }
     
     fun getMethod(name: String) = methods?.find { it.name == name }
+    
+    fun getOrCreateClassInit(): MethodNode {
+        val method = getMethod("<clinit>", "()V")
+        if (method != null) return method
+        val newMethod = MethodNode(ACC_PUBLIC or ACC_STATIC, "<clinit>", "()V", null, null)
+        newMethod.instructions = buildInsnList { _return() }
+        methods?.add(newMethod)
+        return newMethod
+    }
     
     operator fun contains(method: MethodNode) = getMethod(method.name, method.desc) != null
     
