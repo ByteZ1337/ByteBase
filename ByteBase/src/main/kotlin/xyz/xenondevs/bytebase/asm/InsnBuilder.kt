@@ -10,9 +10,13 @@ import xyz.xenondevs.bytebase.util.Int32
 import xyz.xenondevs.bytebase.util.toLdcInsn
 import kotlin.reflect.KClass
 
+@DslMarker
+annotation class InsnDsl
+
 /**
  * DSL builder for ASMs [InsnList]
  */
+@InsnDsl
 class InsnBuilder {
     
     /**
@@ -404,5 +408,5 @@ class InsnBuilder {
     }
 }
 
-
+@InsnDsl
 fun buildInsnList(builder: InsnBuilder.() -> Unit) = InsnBuilder().apply(builder).list
