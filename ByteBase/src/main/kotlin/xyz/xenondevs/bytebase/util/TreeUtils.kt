@@ -1,7 +1,9 @@
 package xyz.xenondevs.bytebase.util
 
 import org.objectweb.asm.tree.*
+import xyz.xenondevs.bytebase.asm.InsnBuilder
 import xyz.xenondevs.bytebase.asm.access.ReferencingAccess
+import xyz.xenondevs.bytebase.asm.buildInsnList
 import xyz.xenondevs.bytebase.jvm.ClassWrapper
 import xyz.xenondevs.bytebase.jvm.VirtualClassPath
 import kotlin.reflect.KClass
@@ -41,6 +43,12 @@ val MethodNode.accessWrapper
     get() = ReferencingAccess(this::access) { access = it }
 
 fun MethodNode.hasAnnotations() = !this.visibleAnnotations.isNullOrEmpty() || !this.invisibleAnnotations.isNullOrEmpty()
+
+fun MethodNode(access: Int, name: String, descriptor: String, instructions: InsnBuilder.() -> Unit): MethodNode {
+    val method = MethodNode(access, name, descriptor, null, null)
+    method.instructions = buildInsnList(instructions)
+    return method
+}
 
 val MethodInsnNode.ownerClass
     get() = VirtualClassPath.getClass(this.owner)

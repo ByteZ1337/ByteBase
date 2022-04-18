@@ -35,6 +35,11 @@ class InsnBuilder {
     fun add(insnList: InsnList) = list.add(insnList)
     
     /**
+     * Adds a [label][LabelNode] to the current [list]
+     */
+    fun addLabel(): LabelNode = LabelNode().also(::add)
+    
+    /**
      * Adds a zero operand instruction
      */
     private fun insnOf(opcode: Int32) = add(InsnNode(opcode))
