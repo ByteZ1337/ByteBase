@@ -2,6 +2,9 @@ package xyz.xenondevs.bytebase.asm.refactor
 
 import org.objectweb.asm.commons.SimpleRemapper
 
+/**
+ * [SimpleRemapper] implementation that also allows remapping of field names and local variable names
+ */
 class MemberRemapper(mappings: Map<String, String>) : SimpleRemapper(mappings) {
     
     override fun mapFieldName(owner: String, name: String, descriptor: String) =

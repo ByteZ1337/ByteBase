@@ -21,8 +21,14 @@ import org.objectweb.asm.commons.ClassRemapper as ASMClassRemapper
  */
 class Refactorer(private val jar: JavaArchive, private val mappings: Map<String, String>) {
     
+    /**
+     * The [MemberRemapper] with the given [mappings].
+     */
     val remapper = MemberRemapper(mappings)
     
+    /**
+     * [ASMClassRemapper] implementation to support renaming local variables.
+     */
     inner class ClassRemapper(classVisitor: ClassVisitor) : ASMClassRemapper(classVisitor, remapper) {
         
         override fun visitMethod(access: Int, name: String, descriptor: String, signature: String?, exceptions: Array<out String>?): MethodVisitor? {
@@ -32,6 +38,9 @@ class Refactorer(private val jar: JavaArchive, private val mappings: Map<String,
         
     }
     
+    /**
+     * [MethodVisitor] implementation to support renaming local variables via the [ClassRemapper].
+     */
     inner class MethodRemapper(
         methodVisitor: MethodVisitor,
         val owner: String,
@@ -48,6 +57,11 @@ class Refactorer(private val jar: JavaArchive, private val mappings: Map<String,
         
     }
     
+    /**
+     * Refactors the [jar] with the given [mappings].
+     *
+     * **Old classes will be deleted**
+     */
     fun refactor() {
         val newClasses = mutableListOf<ClassWrapper>()
         

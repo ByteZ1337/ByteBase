@@ -3,8 +3,15 @@ package xyz.xenondevs.bytebase.jvm
 import org.objectweb.asm.ClassReader
 import java.util.*
 
+/**
+ * A virtual classpath used to build a class hierarchy out of [ClassWrappers][ClassWrapper]. Can be used to process and
+ * check inheritance via [InheritanceTrees][InheritanceTree].
+ */
 object VirtualClassPath {
     
+    /**
+     * A [List] of known [Jars][JavaArchive]
+     */
     val knownJars = ArrayList<JavaArchive>()
     
     val classes = HashMap<String, ClassWrapper>()
