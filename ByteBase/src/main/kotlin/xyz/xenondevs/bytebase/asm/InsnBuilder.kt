@@ -408,7 +408,12 @@ class InsnBuilder {
     
     fun printFromStack(type: String = "Ljava/lang/Object;") {
         getStatic("java/lang/System", "out", "Ljava/io/PrintStream;")
-        swap()
+        if (type == "J" || type == "D") {
+            dupx2() // insert the PrintStream under the 2 32-bit values
+            pop() // Pop the old PrintStream
+        } else {
+            swap() // Swap the PrintStream and the value
+        }
         invokeVirtual("java/io/PrintStream", "println", "($type)V")
     }
 }
