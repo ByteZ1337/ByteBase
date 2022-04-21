@@ -10,6 +10,7 @@
     <modules>
         <module>ByteBase</module>
         <module>ByteBase-Runtime</module>
+        <module>ByteBase-Analysis</module>
     </modules>
     <packaging>pom</packaging>
 
