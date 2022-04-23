@@ -3,6 +3,7 @@ package xyz.xenondevs.bytebase.analysis.stack
 import org.objectweb.asm.Opcodes.*
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.*
+import java.util.Stack
 
 object StackSizeCalculator {
     
@@ -201,4 +202,63 @@ object StackSizeCalculator {
         return size
     }
     
+    /**
+     * Emulates the control flow of a method and determines the stack size when entering a label. These entry nodes are
+     * called "gates" in the following docs and code.
+     */
+    fun emulateLabelGates(methodNode: MethodNode): Map<LabelNode, LabelGateInfo> {
+        val gates = methodNode.instructions.asSequence().filterIsInstance<LabelNode>().map { it to LabelGateInfo() }.toMap()
+        if (gates.isEmpty())
+            return gates // No labels in this method
+        
+        val instructions = methodNode.instructions
+        if (instructions.size() == 0)
+            return gates
+        
+        val finished = mutableListOf<LabelNode>()
+        val toProcess = ArrayDeque<LabelNode>()
+        
+        // If the first instruction is not a label, we need to manually determine the size
+        var size = 0
+        var current = instructions.first()
+        while (current !is LabelNode) {
+            size += getStackSize(current)
+            current = current.next
+        }
+        gates[current]!!.entrySize = size // A label has been reached, so we can set the entry gate size
+        toProcess.add(current)
+        
+        while (toProcess.isNotEmpty()) {
+            val next = toProcess.removeFirst()
+            emulateLabel(next, gates, finished, toProcess)
+        }
+        
+        return gates
+    }
+    
+    private fun emulateLabel(
+        label: LabelNode,
+        gates: Map<LabelNode, LabelGateInfo>,
+        finished: MutableList<LabelNode>,
+        toProcess: MutableList<LabelNode>,
+    ) {
+        var current = label.next
+        var size = gates[label]!!.entrySize // the start stack size of the label
+        
+        while (current != null) { // Until we reach the end of the method
+            size += getStackSize(current)
+            if (current is JumpInsnNode && current.label !in finished) { // A new branch of the control flow with a previously unknown label
+                toProcess += current.label
+                gates[current.label]!!.entrySize = size // When jumping to this label, the starting stack size is the current size
+                if (current.opcode == GOTO) // Can't fall through so we can stop here
+                    break
+            } else if (current is LabelNode && current !in finished) { // Fell through to the next label
+                toProcess += current
+                gates[current]!!.entrySize = size // When reaching this label, the starting stack size is the current size
+                break
+            }
+            current = current.next
+        }
+        finished += label
+    }
 }
