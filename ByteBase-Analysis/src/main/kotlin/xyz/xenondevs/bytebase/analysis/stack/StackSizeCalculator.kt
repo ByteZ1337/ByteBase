@@ -155,16 +155,17 @@ object StackSizeCalculator {
                 return if (insn.cst is Long || insn.cst is Double) 2 else 1
             }
             
-            GETFIELD, GETSTATIC -> {
+            GETFIELD, GETSTATIC, PUTFIELD, PUTSTATIC -> {
                 insn as FieldInsnNode
-                val sort = Type.getType(insn.desc).sort
-                return if (sort == Type.LONG || sort == Type.DOUBLE) 2 else 1
-            }
-            
-            PUTFIELD, PUTSTATIC -> {
-                insn as FieldInsnNode
-                val sort = Type.getType(insn.desc).sort
-                return if (sort == Type.LONG || sort == Type.DOUBLE) -2 else -1
+                val sizeChange = if (Type.getType(insn.desc).sort.let { it == Type.LONG || it == Type.DOUBLE }) 2 else 1
+                val count = when (insn.opcode) {
+                    GETFIELD -> sizeChange - 1 // objectref
+                    GETSTATIC -> sizeChange
+                    PUTFIELD -> -sizeChange - 1 // objectref
+                    PUTSTATIC -> -sizeChange
+                    else -> throw IllegalStateException()
+                }
+                return count
             }
             
             MULTIANEWARRAY ->
