@@ -2,8 +2,6 @@ package xyz.xenondevs.bytebase.jvm
 
 import org.objectweb.asm.ClassReader
 import java.util.*
-import kotlin.collections.ArrayList
-import kotlin.collections.HashSet
 import kotlin.reflect.KClass
 
 /**
@@ -102,6 +100,18 @@ object VirtualClassPath {
     operator fun get(clazz: Class<*>) = getClass(clazz.name)
     
     operator fun get(clazz: KClass<*>) = getClass(clazz.java.name)
+    
+    fun getInstructions(clazz: Class<*>, method: String, desc: String) =
+        getClass(clazz.name).getMethod(method, desc)!!.instructions
+    
+    fun getInstructions(clazz: Class<*>, method: String) =
+        getClass(clazz.name).getMethod(method)!!.instructions
+    
+    fun getInstructions(clazz: KClass<*>, method: String, desc: String) =
+        getInstructions(clazz.java, method, desc)
+    
+    fun getInstructions(clazz: KClass<*>, method: String) =
+        getInstructions(clazz.java, method)
     
     fun getTree(clazz: ClassWrapper, vararg knownSubClasses: ClassWrapper) = getTree(clazz, knownSubClasses.asList())
     
