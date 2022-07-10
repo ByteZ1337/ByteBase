@@ -2,6 +2,9 @@ package xyz.xenondevs.bytebase.jvm
 
 import org.objectweb.asm.ClassReader
 import java.util.*
+import kotlin.collections.ArrayList
+import kotlin.collections.HashSet
+import kotlin.reflect.KClass
 
 /**
  * A virtual classpath used to build a class hierarchy out of [ClassWrappers][ClassWrapper]. Can be used to process and
@@ -16,6 +19,12 @@ object VirtualClassPath {
     
     val classes = HashMap<String, ClassWrapper>()
     val inheritanceTrees = HashMap<ClassWrapper, InheritanceTree>()
+    
+    /**
+     * A [List] of additional [ClassLoaders][ClassLoader] to check in [getClass]. The system classloader and the classloader
+     * of [VirtualClassPath] are always checked.
+     */
+    val classLoaders = HashSet<ClassLoader>()
     
     /**
      * Loads a [JavaArchive] into the VirtualClassPath. Please note that this will replace classes in the VirtualClassPath
@@ -72,6 +81,8 @@ object VirtualClassPath {
             val systemStream = ClassLoader.getSystemResourceAsStream("$internalName.class")
                 ?: javaClass.classLoader.getResourceAsStream("$internalName.class")
                 // Neither the System ClassLoader nor the current ClassLoader knows this class
+                ?: classLoaders.firstNotNullOfOrNull { it.getResourceAsStream("$internalName.class") }
+                // Class could not be found in the JVM via the provided ClassLoaders
                 ?: throw ClassNotFoundException("$name not found! Did you add all dependencies?")
             
             val wrapper = ClassWrapper("$internalName.class", ClassReader(systemStream))
@@ -85,6 +96,12 @@ object VirtualClassPath {
     fun getClassWrapper(clazz: Class<*>): ClassWrapper {
         return getClass(clazz.name)
     }
+    
+    operator fun get(className: String) = getClass(className)
+    
+    operator fun get(clazz: Class<*>) = getClass(clazz.name)
+    
+    operator fun get(clazz: KClass<*>) = getClass(clazz.java.name)
     
     fun getTree(clazz: ClassWrapper, vararg knownSubClasses: ClassWrapper) = getTree(clazz, knownSubClasses.asList())
     
