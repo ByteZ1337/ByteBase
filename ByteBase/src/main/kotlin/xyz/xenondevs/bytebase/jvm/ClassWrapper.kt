@@ -1,9 +1,11 @@
 package xyz.xenondevs.bytebase.jvm
 
 import org.objectweb.asm.ClassReader
+import org.objectweb.asm.ClassWriter.COMPUTE_FRAMES
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Opcodes.ACC_PUBLIC
 import org.objectweb.asm.Opcodes.ACC_STATIC
+import org.objectweb.asm.Type
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.FieldNode
 import org.objectweb.asm.tree.MethodNode
@@ -13,6 +15,7 @@ import xyz.xenondevs.bytebase.asm.OBJECT_TYPE
 import xyz.xenondevs.bytebase.asm.access.ReferencingAccess
 import xyz.xenondevs.bytebase.asm.buildInsnList
 import xyz.xenondevs.bytebase.util.Int32
+import java.lang.reflect.Method
 
 class ClassWrapper : ClassNode {
     
@@ -80,7 +83,7 @@ class ClassWrapper : ClassNode {
     constructor(fileName: String, byteCode: ByteArray, parsingOptions: Int32 = ClassReader.SKIP_FRAMES)
         : this(fileName, ClassReader(byteCode), parsingOptions)
     
-    fun assemble() = ClassWriter().also(this::accept).toByteArray()!!
+    fun assemble(computeFrames: Boolean = true) = ClassWriter(if (computeFrames) COMPUTE_FRAMES else 0).also(this::accept).toByteArray()!!
     
     fun getField(name: String, desc: String) = fields?.find { it.name == name && it.desc == desc }
     
@@ -88,9 +91,13 @@ class ClassWrapper : ClassNode {
     
     operator fun contains(field: FieldNode) = getField(field.name, field.desc) != null
     
+    fun getMethod(name: String, type: Type) = methods?.find { it.name == name && it.desc == type.descriptor }
+    
     fun getMethod(name: String, desc: String) = methods?.find { it.name == name && it.desc == desc }
     
     fun getMethod(name: String) = methods?.find { it.name == name }
+    
+    fun getMethodLike(method: Method) = getMethod(method.name, Type.getType(method))
     
     fun getOrCreateClassInit(): MethodNode {
         val method = getMethod("<clinit>", "()V")

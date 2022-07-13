@@ -1,6 +1,8 @@
 package xyz.xenondevs.bytebase.jvm
 
 import org.objectweb.asm.ClassReader
+import org.objectweb.asm.Type
+import java.lang.reflect.Method
 import java.util.*
 import kotlin.reflect.KClass
 
@@ -112,6 +114,9 @@ object VirtualClassPath {
     
     fun getInstructions(clazz: KClass<*>, method: String) =
         getInstructions(clazz.java, method)
+    
+    fun getInstructions(method: Method) =
+        getInstructions(method.declaringClass, method.name, Type.getType(method).descriptor)
     
     fun getTree(clazz: ClassWrapper, vararg knownSubClasses: ClassWrapper) = getTree(clazz, knownSubClasses.asList())
     
