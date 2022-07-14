@@ -116,7 +116,7 @@ object VirtualClassPath {
         getInstructions(clazz.java, method)
     
     fun getInstructions(method: Method) =
-        getInstructions(method.declaringClass, method.name, Type.getType(method).descriptor)
+        getInstructions(method.declaringClass, method.name, Type.getMethodDescriptor(method))
     
     fun getTree(clazz: ClassWrapper, vararg knownSubClasses: ClassWrapper) = getTree(clazz, knownSubClasses.asList())
     

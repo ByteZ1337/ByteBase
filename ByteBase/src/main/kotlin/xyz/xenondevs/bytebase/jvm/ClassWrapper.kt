@@ -97,7 +97,7 @@ class ClassWrapper : ClassNode {
     
     fun getMethod(name: String) = methods?.find { it.name == name }
     
-    fun getMethodLike(method: Method) = getMethod(method.name, Type.getType(method))
+    fun getMethodLike(method: Method) = getMethod(method.name, Type.getMethodDescriptor(method))
     
     fun getOrCreateClassInit(): MethodNode {
         val method = getMethod("<clinit>", "()V")
