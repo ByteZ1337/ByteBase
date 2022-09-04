@@ -1,7 +1,11 @@
 package xyz.xenondevs.bytebase.util
 
 import org.objectweb.asm.Opcodes
-import org.objectweb.asm.tree.*
+import org.objectweb.asm.tree.AbstractInsnNode
+import org.objectweb.asm.tree.InsnList
+import org.objectweb.asm.tree.InsnNode
+import org.objectweb.asm.tree.IntInsnNode
+import org.objectweb.asm.tree.LdcInsnNode
 
 /**
  * Converts an integer to the corresponding [LdcInsnNode] instruction or uses ``iconst``/``bipush``/``sipush`` if possible
@@ -97,6 +101,22 @@ val AbstractInsnNode.doubleValue: Double
         }
     }
 
+fun AbstractInsnNode.next(amount: Int): AbstractInsnNode? = skip(amount) { it.next }
+
+fun AbstractInsnNode.previous(amount: Int): AbstractInsnNode? = skip(amount) { it.previous }
+
+private fun AbstractInsnNode.skip(amount: Int, next: (AbstractInsnNode) -> AbstractInsnNode?): AbstractInsnNode? {
+    var i = 0
+    var current: AbstractInsnNode? = this
+    while (i < amount) {
+        current = next(current!!)
+        if (current == null)
+            return null
+        ++i
+    }
+    return current
+}
+
 /**
  * Removes the given [instructions][insn] from the list
  */
@@ -116,4 +136,18 @@ fun InsnList.replace(insn: AbstractInsnNode, replacement: AbstractInsnNode) {
 fun InsnList.replace(insn: AbstractInsnNode, replacement: InsnList) {
     insertBefore(insn, replacement)
     remove(insn)
+}
+
+fun InsnList.isEmpty() = first == null
+
+fun InsnList.isNotEmpty() = first != null
+
+fun InsnList.replaceRange(from: Int, to: Int, insnList: InsnList) {
+    repeat(to - from + 1) { remove(get(from)) }
+    insertBefore(get(from), insnList)
+}
+
+fun InsnList.replaceRange(from: Int, to: Int, insn: AbstractInsnNode) {
+    repeat(to - from + 1) { remove(get(from)) }
+    insertBefore(get(from), insn)
 }
