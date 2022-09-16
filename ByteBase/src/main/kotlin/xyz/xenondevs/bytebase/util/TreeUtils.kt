@@ -1,6 +1,12 @@
 package xyz.xenondevs.bytebase.util
 
-import org.objectweb.asm.tree.*
+import org.objectweb.asm.tree.AnnotationNode
+import org.objectweb.asm.tree.ClassNode
+import org.objectweb.asm.tree.FieldInsnNode
+import org.objectweb.asm.tree.FieldNode
+import org.objectweb.asm.tree.InsnList
+import org.objectweb.asm.tree.MethodInsnNode
+import org.objectweb.asm.tree.MethodNode
 import xyz.xenondevs.bytebase.asm.InsnBuilder
 import xyz.xenondevs.bytebase.asm.access.ReferencingAccess
 import xyz.xenondevs.bytebase.asm.buildInsnList
@@ -133,3 +139,5 @@ val MethodInsnNode.node
  */
 val MethodInsnNode.access
     get() = node?.accessWrapper ?: error("Method $owner.$name does not exist") // ValueAccess(ACC_PRIVATE)
+
+fun InsnList.copy() = MethodNode().also(this::accept).instructions!!

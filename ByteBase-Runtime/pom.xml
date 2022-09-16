@@ -5,7 +5,7 @@
     <parent>
         <artifactId>ByteBase-Parent</artifactId>
         <groupId>xyz.xenondevs.bytebase</groupId>
-        <version>0.3-SNAPSHOT</version>
+        <version>0.4</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -50,12 +50,12 @@
         <dependency>
             <groupId>net.bytebuddy</groupId>
             <artifactId>byte-buddy-agent</artifactId>
-            <version>1.12.10</version>
+            <version>1.12.16</version>
         </dependency>
         <dependency>
             <groupId>xyz.xenondevs.bytebase</groupId>
             <artifactId>ByteBase</artifactId>
-            <version>0.3-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
     </dependencies>
 

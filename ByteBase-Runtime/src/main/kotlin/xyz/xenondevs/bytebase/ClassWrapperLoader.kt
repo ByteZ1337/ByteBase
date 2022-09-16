@@ -3,6 +3,7 @@ package xyz.xenondevs.bytebase
 import xyz.xenondevs.bytebase.jvm.ClassWrapper
 
 class ClassWrapperLoader(parent: ClassLoader) : ClassLoader(parent) {
+    
     fun loadClass(clazz: ClassWrapper): Class<*> {
         val loadedClass = findLoadedClass(clazz.name)
         if (loadedClass != null)
