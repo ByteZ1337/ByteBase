@@ -27,7 +27,7 @@ private fun MethodNode.insertAtEvery(match: (AbstractInsnNode) -> Boolean, inser
 
 fun MethodNode.insertAfterFirst(instructions: InsnList, match: (AbstractInsnNode) -> Boolean) =
     insertAtFirst(match) { insn, list ->
-        list.insert(insn, instructions.copy())
+        list.insert(insn, instructions)
     }
 
 fun MethodNode.insertAfterEvery(instructions: InsnList, match: (AbstractInsnNode) -> Boolean) =
@@ -37,10 +37,53 @@ fun MethodNode.insertAfterEvery(instructions: InsnList, match: (AbstractInsnNode
 
 fun MethodNode.insertBeforeFirst(instructions: InsnList, match: (AbstractInsnNode) -> Boolean) =
     insertAtFirst(match) { insn, list ->
-        list.insertBefore(insn, instructions.copy())
+        list.insertBefore(insn, instructions)
     }
 
 fun MethodNode.insertBeforeEvery(instructions: InsnList, match: (AbstractInsnNode) -> Boolean) =
     insertAtEvery(match) { insn, list ->
         list.insertBefore(insn, instructions.copy())
     }
+
+fun MethodNode.replaceFirst(dropBefore: Int, dropAfter: Int, instructions: InsnList, match: (AbstractInsnNode) -> Boolean) {
+    replaceNth(0, dropBefore, dropAfter, instructions, match)
+}
+
+fun MethodNode.replaceNth(nth: Int, dropBefore: Int, dropAfter: Int, instructions: InsnList, match: (AbstractInsnNode) -> Boolean) {
+    var matchIdx = 0
+    var insnIdx = 0
+    val iterator = this.instructions.iterator()
+    while (iterator.hasNext()) {
+        val insn = iterator.next()
+        if (match(insn)) {
+            if (matchIdx == nth) {
+                this.instructions.replaceRange(insnIdx - dropBefore, insnIdx + dropAfter, instructions)
+                break
+            }
+            
+            matchIdx++
+        }
+        
+        insnIdx++
+    }
+}
+
+fun MethodNode.replaceEvery(dropBefore: Int, dropAfter: Int, instructions: InsnList, match: (AbstractInsnNode) -> Boolean) {
+    val ranges = ArrayList<IntRange>()
+    
+    var insnIdx = 0
+    val iterator = this.instructions.iterator()
+    while (iterator.hasNext()) {
+        val insn = iterator.next()
+        if (match(insn)) {
+            ranges += (insnIdx - dropBefore)..(insnIdx + dropAfter)
+        }
+        insnIdx++
+    }
+    
+    val idxChange = instructions.size() - (dropBefore + dropAfter + 1)
+    ranges.forEachIndexed { offsetIdx, range ->
+        val offset = offsetIdx * idxChange
+        this.instructions.replaceRange(offset + range.first, offset + range.last, instructions.copy())
+    }
+}
