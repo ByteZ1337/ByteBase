@@ -5,10 +5,26 @@ package xyz.xenondevs.bytebase.asm
 import org.objectweb.asm.Handle
 import org.objectweb.asm.Opcodes.*
 import org.objectweb.asm.Type
-import org.objectweb.asm.tree.*
+import org.objectweb.asm.tree.AbstractInsnNode
+import org.objectweb.asm.tree.FieldInsnNode
+import org.objectweb.asm.tree.IincInsnNode
+import org.objectweb.asm.tree.InsnList
+import org.objectweb.asm.tree.InsnNode
+import org.objectweb.asm.tree.IntInsnNode
+import org.objectweb.asm.tree.JumpInsnNode
+import org.objectweb.asm.tree.LabelNode
+import org.objectweb.asm.tree.LdcInsnNode
+import org.objectweb.asm.tree.MethodInsnNode
+import org.objectweb.asm.tree.TypeInsnNode
+import org.objectweb.asm.tree.VarInsnNode
 import xyz.xenondevs.bytebase.util.Int32
+import xyz.xenondevs.bytebase.util.internalName
 import xyz.xenondevs.bytebase.util.toLdcInsn
+import java.lang.reflect.Method
 import kotlin.reflect.KClass
+import kotlin.reflect.KFunction
+import kotlin.reflect.jvm.javaConstructor
+import kotlin.reflect.jvm.javaMethod
 
 @DslMarker
 annotation class InsnDsl
@@ -359,18 +375,52 @@ class InsnBuilder {
     private fun invoke(opcode: Int32, owner: String, name: String, desc: String, isInterface: Boolean) =
         add(MethodInsnNode(opcode, owner, name, desc, isInterface))
     
+    private fun invoke(opcode: Int32, method: Method, isInterface: Boolean) =
+        invoke(opcode, method.declaringClass.internalName, method.name, Type.getMethodDescriptor(method), isInterface)
+    
+    private fun invoke(opcode: Int32, kFunction: KFunction<*>, isInterface: Boolean = false) {
+        val method = kFunction.javaMethod
+        if (method != null) {
+            invoke(opcode, method.declaringClass.internalName, method.name, Type.getMethodDescriptor(method), isInterface)
+        } else {
+            val constructor = kFunction.javaConstructor
+                ?: throw IllegalArgumentException("kFunction must be a method or constructor")
+            invoke(opcode, constructor.declaringClass.internalName, "<init>", Type.getConstructorDescriptor(constructor), isInterface)
+        }
+    }
     
     fun invokeVirtual(owner: String, name: String, desc: String, isInterface: Boolean = false) =
         invoke(INVOKEVIRTUAL, owner, name, desc, isInterface)
     
+    fun invokeVirtual(method: Method, isInterface: Boolean = false) =
+        invoke(INVOKEVIRTUAL, method, isInterface)
+    
+    fun invokeVirtual(kFunction: KFunction<*>, isInterface: Boolean = false) =
+        invoke(INVOKEVIRTUAL, kFunction, isInterface)
+    
     fun invokeSpecial(owner: String, name: String, desc: String, isInterface: Boolean = false) =
         invoke(INVOKESPECIAL, owner, name, desc, isInterface)
+    
+    fun invokeSpecial(method: Method, isInterface: Boolean = false) =
+        invoke(INVOKESPECIAL, method, isInterface)
+    
+    fun invokeSpecial(kFunction: KFunction<*>, isInterface: Boolean = false) =
+        invoke(INVOKESPECIAL, kFunction, isInterface)
     
     fun invokeStatic(owner: String, name: String, desc: String, isInterface: Boolean = false) =
         invoke(INVOKESTATIC, owner, name, desc, isInterface)
     
-    fun invokeInterface(owner: String, name: String, desc: String, isInterface: Boolean = false) =
+    fun invokeStatic(method: Method, isInterface: Boolean = false) =
+        invoke(INVOKESTATIC, method, isInterface)
+    
+    fun invokeInterface(owner: String, name: String, desc: String, isInterface: Boolean = true) =
         invoke(INVOKEINTERFACE, owner, name, desc, isInterface)
+    
+    fun invokeInterface(method: Method, isInterface: Boolean = true) =
+        invoke(INVOKEINTERFACE, method, isInterface)
+    
+    fun invokeInterface(kFunction: KFunction<*>, isInterface: Boolean = true) =
+        invoke(INVOKEINTERFACE, kFunction, isInterface)
     
     //</editor-fold>
     

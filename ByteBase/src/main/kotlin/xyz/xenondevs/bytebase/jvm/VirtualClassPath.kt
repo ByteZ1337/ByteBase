@@ -103,6 +103,9 @@ object VirtualClassPath {
     
     operator fun get(clazz: KClass<*>) = getClass(clazz.java.name)
     
+    operator fun get(method: Method) = getClass(method.declaringClass.name)[method]
+        ?: throw NoSuchMethodException("Method ${method.name} not found in ${method.declaringClass.name}")
+    
     fun getInstructions(clazz: Class<*>, method: String, desc: String) =
         getClass(clazz.name).getMethod(method, desc)!!.instructions
     

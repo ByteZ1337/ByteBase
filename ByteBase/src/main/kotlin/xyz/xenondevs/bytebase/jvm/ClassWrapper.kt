@@ -15,7 +15,14 @@ import xyz.xenondevs.bytebase.asm.OBJECT_TYPE
 import xyz.xenondevs.bytebase.asm.access.ReferencingAccess
 import xyz.xenondevs.bytebase.asm.buildInsnList
 import xyz.xenondevs.bytebase.util.Int32
+import java.lang.reflect.Constructor
+import java.lang.reflect.Field
 import java.lang.reflect.Method
+import kotlin.reflect.KFunction
+import kotlin.reflect.KProperty
+import kotlin.reflect.jvm.javaConstructor
+import kotlin.reflect.jvm.javaField
+import kotlin.reflect.jvm.javaMethod
 
 class ClassWrapper : ClassNode {
     
@@ -89,6 +96,10 @@ class ClassWrapper : ClassNode {
     
     fun getField(name: String) = fields?.find { it.name == name }
     
+    operator fun get(field: Field) = getField(field.name, Type.getDescriptor(field.type))
+    
+    operator fun get(kProperty: KProperty<*>) = kProperty.javaField?.let { this[it] }
+    
     operator fun contains(field: FieldNode) = getField(field.name, field.desc) != null
     
     fun getMethod(name: String, type: Type) = methods?.find { it.name == name && it.desc == type.descriptor }
@@ -97,15 +108,34 @@ class ClassWrapper : ClassNode {
     
     fun getMethod(name: String) = methods?.find { it.name == name }
     
-    fun getMethodLike(method: Method) = getMethod(method.name, Type.getMethodDescriptor(method))
+    @Deprecated("Use get(method) instead", ReplaceWith("get(method)"))
+    fun getMethodLike(method: Method) = get(method)
     
-    fun getOrCreateClassInit(): MethodNode {
-        val method = getMethod("<clinit>", "()V")
+    fun getOrCreateMethod(name: String, desc: String, access: Int = ACC_PUBLIC): MethodNode {
+        val method = getMethod(name, desc)
         if (method != null) return method
-        val newMethod = MethodNode(ACC_PUBLIC or ACC_STATIC, "<clinit>", "()V", null, null)
+        val newMethod = MethodNode(access, name, desc, null, null)
         newMethod.instructions = buildInsnList { _return() }
         methods?.add(newMethod)
         return newMethod
+    }
+    
+    fun getOrCreateClassInit() = getOrCreateMethod("<clinit>", "()V", ACC_PUBLIC or ACC_STATIC)
+    
+    operator fun get(method: Method) = getMethod(method.name, Type.getMethodDescriptor(method))
+    
+    operator fun get(constructor: Constructor<*>) = getMethod("<init>", Type.getConstructorDescriptor(constructor))
+    
+    operator fun get(kFunction: KFunction<*>): MethodNode? {
+        val method = kFunction.javaMethod
+        if (method != null)
+            return get(method)
+        
+        val constructor = kFunction.javaConstructor
+        if (constructor != null)
+            return get(constructor)
+        
+        return null
     }
     
     operator fun contains(method: MethodNode) = getMethod(method.name, method.desc) != null
