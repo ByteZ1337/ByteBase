@@ -20,10 +20,13 @@ import org.objectweb.asm.tree.VarInsnNode
 import xyz.xenondevs.bytebase.util.Int32
 import xyz.xenondevs.bytebase.util.internalName
 import xyz.xenondevs.bytebase.util.toLdcInsn
+import java.lang.reflect.Field
 import java.lang.reflect.Method
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
+import kotlin.reflect.KProperty
 import kotlin.reflect.jvm.javaConstructor
+import kotlin.reflect.jvm.javaField
 import kotlin.reflect.jvm.javaMethod
 
 @DslMarker
@@ -359,10 +362,27 @@ class InsnBuilder {
     private fun getField(opcode: Int32, owner: String, name: String, desc: String) =
         add(FieldInsnNode(opcode, owner, name, desc))
     
+    private fun getField(opcode: Int32, field: Field) =
+        getField(opcode, field.declaringClass.internalName, field.name, Type.getDescriptor(field.type))
+    
+    private fun getField(opcode: Int32, kProperty: KProperty<*>) {
+        val field = kProperty.javaField
+            ?: throw IllegalArgumentException("kProperty $kProperty must be a field")
+        getField(opcode, field)
+    }
+    
     fun getStatic(owner: String, name: String, desc: String) = getField(GETSTATIC, owner, name, desc)
+    fun getStatic(field: Field) = getField(GETSTATIC, field)
+    fun getStatic(kProperty: KProperty<*>) = getField(GETSTATIC, kProperty)
     fun putStatic(owner: String, name: String, desc: String) = getField(PUTSTATIC, owner, name, desc)
+    fun putStatic(field: Field) = getField(PUTSTATIC, field)
+    fun putStatic(kProperty: KProperty<*>) = getField(PUTSTATIC, kProperty)
     fun getField(owner: String, name: String, desc: String) = getField(GETFIELD, owner, name, desc)
+    fun getField(field: Field) = getField(GETFIELD, field)
+    fun getField(kProperty: KProperty<*>) = getField(GETFIELD, kProperty)
     fun putField(owner: String, name: String, desc: String) = getField(PUTFIELD, owner, name, desc)
+    fun putField(field: Field) = getField(PUTFIELD, field)
+    fun putField(kProperty: KProperty<*>) = getField(PUTFIELD, kProperty)
     
     //</editor-fold>
     
@@ -384,7 +404,7 @@ class InsnBuilder {
             invoke(opcode, method.declaringClass.internalName, method.name, Type.getMethodDescriptor(method), isInterface)
         } else {
             val constructor = kFunction.javaConstructor
-                ?: throw IllegalArgumentException("kFunction must be a method or constructor")
+                ?: throw IllegalArgumentException("kFunction $kFunction must be a method or constructor")
             invoke(opcode, constructor.declaringClass.internalName, "<init>", Type.getConstructorDescriptor(constructor), isInterface)
         }
     }
