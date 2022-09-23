@@ -1,11 +1,22 @@
 package xyz.xenondevs.bytebase.util
 
 import org.objectweb.asm.Opcodes
+import org.objectweb.asm.Type
 import org.objectweb.asm.tree.AbstractInsnNode
+import org.objectweb.asm.tree.FieldInsnNode
 import org.objectweb.asm.tree.InsnList
 import org.objectweb.asm.tree.InsnNode
 import org.objectweb.asm.tree.IntInsnNode
 import org.objectweb.asm.tree.LdcInsnNode
+import org.objectweb.asm.tree.MethodInsnNode
+import java.lang.reflect.Constructor
+import java.lang.reflect.Field
+import java.lang.reflect.Method
+import kotlin.reflect.KFunction
+import kotlin.reflect.KProperty
+import kotlin.reflect.jvm.javaConstructor
+import kotlin.reflect.jvm.javaField
+import kotlin.reflect.jvm.javaMethod
 
 /**
  * Converts an integer to the corresponding [LdcInsnNode] instruction or uses ``iconst``/``bipush``/``sipush`` if possible
@@ -116,6 +127,56 @@ private fun AbstractInsnNode.skip(amount: Int, next: (AbstractInsnNode) -> Abstr
     }
     return current
 }
+
+fun MethodInsnNode.calls(owner: String, name: String, desc: String) =
+    this.owner == owner && this.name == name && this.desc == desc
+
+fun MethodInsnNode.calls(method: Method) =
+    calls(method.declaringClass.internalName, method.name, Type.getMethodDescriptor(method))
+
+fun MethodInsnNode.calls(constructor: Constructor<*>) =
+    calls(constructor.declaringClass.internalName, "<init>", Type.getConstructorDescriptor(constructor))
+
+fun MethodInsnNode.calls(kFunction: KFunction<*>): Boolean {
+    val method = kFunction.javaMethod
+    if (method != null)
+        return calls(method)
+    
+    val constructor = kFunction.javaConstructor
+    if (constructor != null)
+        return calls(constructor)
+    
+    return false
+}
+
+fun FieldInsnNode.accesses(owner: String, name: String, desc: String) =
+    this.owner == owner && this.name == name && this.desc == desc
+
+fun FieldInsnNode.gets(owner: String, name: String, desc: String) =
+    (this.opcode == Opcodes.GETFIELD || this.opcode == Opcodes.GETSTATIC)
+        && this.owner == owner && this.name == name && this.desc == desc
+
+fun FieldInsnNode.puts(owner: String, name: String, desc: String) =
+    (this.opcode == Opcodes.PUTFIELD || this.opcode == Opcodes.PUTSTATIC)
+        && this.owner == owner && this.name == name && this.desc == desc
+
+fun FieldInsnNode.accesses(field: Field) =
+    accesses(field.declaringClass.internalName, field.name, Type.getDescriptor(field.type))
+
+fun FieldInsnNode.accesses(kProperty: KProperty<*>) =
+    kProperty.javaField?.let { accesses(it) } ?: false
+
+fun FieldInsnNode.gets(field: Field) =
+    gets(field.declaringClass.internalName, field.name, Type.getDescriptor(field.type))
+
+fun FieldInsnNode.gets(kProperty: KProperty<*>) =
+    kProperty.javaField?.let { gets(it) } ?: false
+
+fun FieldInsnNode.puts(field: Field) =
+    puts(field.declaringClass.internalName, field.name, Type.getDescriptor(field.type))
+
+fun FieldInsnNode.puts(kProperty: KProperty<*>) =
+    kProperty.javaField?.let { puts(it) } ?: false
 
 /**
  * Removes the given [instructions][insn] from the list
