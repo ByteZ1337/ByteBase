@@ -9,7 +9,7 @@ class ClassWrapperLoader(parent: ClassLoader) : ClassLoader(parent) {
         if (loadedClass != null)
             return loadedClass
         val bytecode = clazz.assemble()
-        return defineClass(clazz.name, bytecode, 0, bytecode.size)
+        return defineClass(clazz.name.replace('/', '.'), bytecode, 0, bytecode.size)
     }
     
     companion object {
