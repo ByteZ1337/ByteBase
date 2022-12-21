@@ -9,6 +9,7 @@ import org.objectweb.asm.tree.InsnNode
 import org.objectweb.asm.tree.IntInsnNode
 import org.objectweb.asm.tree.LdcInsnNode
 import org.objectweb.asm.tree.MethodInsnNode
+import xyz.xenondevs.bytebase.jvm.MemberReference
 import java.lang.reflect.Constructor
 import java.lang.reflect.Field
 import java.lang.reflect.Method
@@ -149,6 +150,9 @@ fun MethodInsnNode.calls(kFunction: KFunction<*>): Boolean {
     return false
 }
 
+val MethodInsnNode.reference: MemberReference
+    get() = MemberReference(owner, name, desc)
+
 fun FieldInsnNode.accesses(owner: String, name: String, desc: String) =
     this.owner == owner && this.name == name && this.desc == desc
 
@@ -177,6 +181,9 @@ fun FieldInsnNode.puts(field: Field) =
 
 fun FieldInsnNode.puts(kProperty: KProperty<*>) =
     kProperty.javaField?.let { puts(it) } ?: false
+
+val FieldInsnNode.reference: MemberReference
+    get() = MemberReference(owner, name, desc)
 
 /**
  * Removes the given [instructions][insn] from the list

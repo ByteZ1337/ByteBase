@@ -12,9 +12,11 @@ import org.objectweb.asm.tree.MethodNode
 import xyz.xenondevs.bytebase.asm.ClassWriter
 import xyz.xenondevs.bytebase.asm.OBJECT_CLASS
 import xyz.xenondevs.bytebase.asm.OBJECT_TYPE
+import xyz.xenondevs.bytebase.asm.access.Access
 import xyz.xenondevs.bytebase.asm.access.ReferencingAccess
 import xyz.xenondevs.bytebase.asm.buildInsnList
 import xyz.xenondevs.bytebase.util.Int32
+import xyz.xenondevs.bytebase.util.accessWrapper
 import java.lang.reflect.Constructor
 import java.lang.reflect.Field
 import java.lang.reflect.Method
@@ -92,6 +94,8 @@ class ClassWrapper : ClassNode {
     
     fun assemble(computeFrames: Boolean = true) = ClassWriter(if (computeFrames) COMPUTE_FRAMES else 0).also(this::accept).toByteArray()!!
     
+    //<editor-fold desc="Field getters" defaultstate="collapsed">
+    
     fun getField(name: String, desc: String) = fields?.find { it.name == name && it.desc == desc }
     
     fun getField(name: String) = fields?.find { it.name == name }
@@ -101,6 +105,13 @@ class ClassWrapper : ClassNode {
     operator fun get(kProperty: KProperty<*>) = kProperty.javaField?.let { this[it] }
     
     operator fun contains(field: FieldNode) = getField(field.name, field.desc) != null
+    
+    fun canAccessField(memberReference: MemberReference, assertInSuper: Boolean = false) =
+        canAccess(memberReference, memberReference.resolveField().accessWrapper, assertInSuper)
+    
+    //</editor-fold>
+    
+    //<editor-fold desc="Method getters" defaultstate="collapsed">
     
     fun getMethod(name: String, type: Type) = methods?.find { it.name == name && it.desc == type.descriptor }
     
@@ -139,6 +150,29 @@ class ClassWrapper : ClassNode {
     }
     
     operator fun contains(method: MethodNode) = getMethod(method.name, method.desc) != null
+    
+    fun canAccessMethod(memberReference: MemberReference, assertInSuper: Boolean = false) =
+        canAccess(memberReference, memberReference.resolveMethod().accessWrapper, assertInSuper)
+    
+    //</editor-fold>
+    
+    fun canAccess(ref: MemberReference, access: Access, assertInSuper: Boolean): Boolean {
+        if (ref.owner == name)
+            return true
+        
+        if(access.isPrivate())
+            return false
+    
+        if (access.isPublic())
+            return true
+    
+        val isSuperClass = assertInSuper || inheritanceTree.superClasses.any { it.name == ref.owner }
+        if (access.isProtected() && isSuperClass)
+            return true
+    
+        // package private
+        return ref.owner.substringBeforeLast('/') == name.substringBeforeLast('/')
+    }
     
     fun isAssignableFrom(clazz: ClassWrapper): Boolean {
         if (this.name == OBJECT_TYPE || this == clazz)

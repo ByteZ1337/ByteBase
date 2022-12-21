@@ -6,11 +6,12 @@
 
     <groupId>xyz.xenondevs.bytebase</groupId>
     <artifactId>ByteBase-Parent</artifactId>
-    <version>0.4.2</version>
+    <version>0.4.3</version>
     <modules>
         <module>ByteBase</module>
         <module>ByteBase-Runtime</module>
         <module>ByteBase-Analysis</module>
+        <module>ByteBase-Patch</module>
     </modules>
     <packaging>pom</packaging>
 
@@ -20,7 +21,7 @@
         <kotlin.compiler.jvmTarget>17</kotlin.compiler.jvmTarget>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
-        <kotlin.version>1.7.20</kotlin.version>
+        <kotlin.version>1.7.21</kotlin.version>
     </properties>
 
     <repositories>
@@ -38,7 +39,7 @@
                 <plugin>
                     <groupId>org.jetbrains.kotlin</groupId>
                     <artifactId>kotlin-maven-plugin</artifactId>
-                    <version>1.6.0</version>
+                    <version>${kotlin.version}</version>
                     <executions>
                         <execution>
                             <id>compile</id>

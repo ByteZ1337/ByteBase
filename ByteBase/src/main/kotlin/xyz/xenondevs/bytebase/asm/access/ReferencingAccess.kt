@@ -11,7 +11,9 @@ import xyz.xenondevs.bytebase.util.setMask
  * @param get The getter lambda
  * @param set The setter lambda
  */
-class ReferencingAccess(val get: () -> Int32, val set: (Int32) -> Unit) : Access {
+class ReferencingAccess(val get: () -> Int32, set: (Int32) -> Unit) : Access {
+    
+    private val set: (Int32) -> ReferencingAccess = { set(it); this }
     
     /**
      * Checks if the access flag is public.
@@ -254,7 +256,7 @@ class ReferencingAccess(val get: () -> Int32, val set: (Int32) -> Unit) : Access
     /**
      * Sets the given [flags] to [value].
      */
-    fun setFlags(vararg flags: Int32, value: Boolean = true) {
+    fun setFlags(vararg flags: Int32, value: Boolean = true): ReferencingAccess {
         val mask = flags.reduce { i1, i2 -> i1 or i2 }
         return set(get().setMask(mask, value))
     }

@@ -1,5 +1,8 @@
 package xyz.xenondevs.bytebase.util
 
+import org.objectweb.asm.Opcodes
+import kotlin.reflect.KVisibility
+
 /**
  * A 16-bit integer
  */
@@ -34,3 +37,11 @@ fun Int64.hasMask(mask: Int64) = this and mask == mask
  * Sets the given [mask] to the given [value] in the given [Int64].
  */
 fun Int64.setMask(mask: Int64, value: Boolean) = if (value) this or mask else this and mask.inv()
+
+val KVisibility.access: Int32
+    get() = when(this) {
+        KVisibility.PUBLIC -> Opcodes.ACC_PUBLIC
+        KVisibility.PROTECTED -> Opcodes.ACC_PROTECTED
+        KVisibility.INTERNAL -> Opcodes.ACC_PUBLIC
+        KVisibility.PRIVATE -> Opcodes.ACC_PRIVATE
+    }
