@@ -9,10 +9,12 @@ import org.objectweb.asm.tree.InsnNode
 import org.objectweb.asm.tree.IntInsnNode
 import org.objectweb.asm.tree.LdcInsnNode
 import org.objectweb.asm.tree.MethodInsnNode
+import org.objectweb.asm.tree.TypeInsnNode
 import xyz.xenondevs.bytebase.jvm.MemberReference
 import java.lang.reflect.Constructor
 import java.lang.reflect.Field
 import java.lang.reflect.Method
+import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.KProperty
 import kotlin.reflect.jvm.javaConstructor
@@ -128,6 +130,12 @@ private fun AbstractInsnNode.skip(amount: Int, next: (AbstractInsnNode) -> Abstr
     }
     return current
 }
+
+fun TypeInsnNode.isClass(clazz: Class<*>) =
+    this.desc == clazz.internalName
+
+fun TypeInsnNode.isClass(kClass: KClass<*>) =
+    this.desc == kClass.internalName
 
 fun MethodInsnNode.calls(owner: String, name: String, desc: String) =
     this.owner == owner && this.name == name && this.desc == desc
