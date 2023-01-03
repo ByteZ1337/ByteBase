@@ -88,6 +88,79 @@ fun InsnList.replaceEvery(dropBefore: Int, dropAfter: Int, instructions: InsnLis
     }
 }
 
+fun InsnList.replaceFirstRange(
+    start: (AbstractInsnNode) -> Boolean,
+    end: (AbstractInsnNode) -> Boolean,
+    dropBefore: Int,
+    dropAfter: Int,
+    instructions: InsnList
+) {
+    replaceNthRange(0, start, end, dropBefore, dropAfter, instructions)
+}
+
+fun InsnList.replaceNthRange(
+    n: Int,
+    start: (AbstractInsnNode) -> Boolean,
+    end: (AbstractInsnNode) -> Boolean,
+    dropBefore: Int,
+    dropAfter: Int,
+    instructions: InsnList
+) {
+    var matchIdx = 0
+    
+    var idx = 0
+    var startIdx: Int? = null
+    
+    val iterator = iterator()
+    while (iterator.hasNext()) {
+        val insn = iterator.next()
+        if (startIdx == null && start(insn)) {
+            if (matchIdx == n) {
+                startIdx = idx
+            } else {
+                matchIdx++
+            }
+        } else if (startIdx != null && end(insn)) {
+            replaceRange(startIdx - dropBefore, idx + dropAfter, instructions)
+            break
+        }
+        
+        idx++
+    }
+}
+
+fun InsnList.replaceEveryRange(
+    start: (AbstractInsnNode) -> Boolean,
+    end: (AbstractInsnNode) -> Boolean,
+    dropBefore: Int,
+    dropAfter: Int,
+    instructions: InsnList
+) {
+    val ranges = ArrayList<IntRange>()
+    
+    var idx = 0
+    var startIdx: Int? = null
+    
+    val iterator = iterator()
+    while (iterator.hasNext()) {
+        val insn = iterator.next()
+        if (startIdx == null && start(insn)) {
+            startIdx = idx
+        } else if (startIdx != null && end(insn)) {
+            ranges += (startIdx - dropBefore)..(idx + dropAfter)
+            startIdx = null
+        }
+        
+        idx++
+    }
+    
+    var offset = 0
+    ranges.forEach { range ->
+        replaceRange(offset + range.first, offset + range.last, instructions.copy())
+        offset += instructions.size() - (range.last - range.first + 1)
+    }
+}
+
 fun MethodNode.insertAfterFirst(instructions: InsnList, match: (AbstractInsnNode) -> Boolean) =
     this.instructions.insertAfterFirst(instructions, match)
 
@@ -108,3 +181,12 @@ fun MethodNode.replaceNth(nth: Int, dropBefore: Int, dropAfter: Int, instruction
 
 fun MethodNode.replaceEvery(dropBefore: Int, dropAfter: Int, instructions: InsnList, match: (AbstractInsnNode) -> Boolean) =
     this.instructions.replaceEvery(dropBefore, dropAfter, instructions, match)
+
+fun MethodNode.replaceFirstRange(start: (AbstractInsnNode) -> Boolean, end: (AbstractInsnNode) -> Boolean, dropBefore: Int, dropAfter: Int, instructions: InsnList) =
+    this.instructions.replaceFirstRange(start, end, dropBefore, dropAfter, instructions)
+
+fun MethodNode.replaceNthRange(n: Int, start: (AbstractInsnNode) -> Boolean, end: (AbstractInsnNode) -> Boolean, dropBefore: Int, dropAfter: Int, instructions: InsnList) =
+    this.instructions.replaceNthRange(n, start, end, dropBefore, dropAfter, instructions)
+
+fun MethodNode.replaceEveryRange(start: (AbstractInsnNode) -> Boolean, end: (AbstractInsnNode) -> Boolean, dropBefore: Int, dropAfter: Int, instructions: InsnList) =
+    this.instructions.replaceEveryRange(start, end, dropBefore, dropAfter, instructions)
