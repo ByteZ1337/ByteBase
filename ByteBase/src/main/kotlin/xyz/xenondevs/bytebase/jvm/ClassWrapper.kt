@@ -89,6 +89,12 @@ class ClassWrapper : ClassNode {
         reader.accept(this, parsingOptions)
     }
     
+    constructor(reader: ClassReader, parsingOptions: Int32 = ClassReader.SKIP_FRAMES) : super(Opcodes.ASM9) {
+        reader.accept(this, parsingOptions)
+        this.fileName = "$name.class"
+        this.originalName = fileName
+    }
+    
     constructor(fileName: String, byteCode: ByteArray, parsingOptions: Int32 = ClassReader.SKIP_FRAMES)
         : this(fileName, ClassReader(byteCode), parsingOptions)
     
@@ -117,7 +123,9 @@ class ClassWrapper : ClassNode {
     
     fun getMethod(name: String, desc: String) = methods?.find { it.name == name && it.desc == desc }
     
-    fun getMethod(name: String) = methods?.find { it.name == name }
+    fun getMethod(name: String, includesDesc: Boolean = false) = methods?.find {
+        if (includesDesc) it.name + it.desc == name else it.name == name
+    }
     
     @Deprecated("Use get(method) instead", ReplaceWith("get(method)"))
     fun getMethodLike(method: Method) = get(method)
@@ -160,16 +168,16 @@ class ClassWrapper : ClassNode {
         if (ref.owner == name)
             return true
         
-        if(access.isPrivate())
+        if (access.isPrivate())
             return false
-    
+        
         if (access.isPublic())
             return true
-    
+        
         val isSuperClass = assertInSuper || inheritanceTree.superClasses.any { it.name == ref.owner }
         if (access.isProtected() && isSuperClass)
             return true
-    
+        
         // package private
         return ref.owner.substringBeforeLast('/') == name.substringBeforeLast('/')
     }

@@ -7,6 +7,7 @@ import org.objectweb.asm.tree.FieldInsnNode
 import org.objectweb.asm.tree.InsnList
 import org.objectweb.asm.tree.InsnNode
 import org.objectweb.asm.tree.IntInsnNode
+import org.objectweb.asm.tree.LabelNode
 import org.objectweb.asm.tree.LdcInsnNode
 import org.objectweb.asm.tree.MethodInsnNode
 import org.objectweb.asm.tree.TypeInsnNode
@@ -117,7 +118,31 @@ val AbstractInsnNode.doubleValue: Double
 
 fun AbstractInsnNode.next(amount: Int): AbstractInsnNode? = skip(amount) { it.next }
 
+fun AbstractInsnNode.nextWhile(predicate: (AbstractInsnNode) -> Boolean): AbstractInsnNode {
+    return skipWhile(predicate, errorMessage = "All next instructions matched the given predicate") { it.next }
+}
+
+fun AbstractInsnNode.nextUntil(predicate: (AbstractInsnNode) -> Boolean): AbstractInsnNode {
+    return skipWhile({ !predicate(it) }, errorMessage = "No next instruction matched the given predicate") { it.next }
+}
+
+fun AbstractInsnNode.nextLabel() : LabelNode {
+    return skipWhile({ it !is LabelNode }, errorMessage = "No next label found") { it.next } as LabelNode
+}
+
 fun AbstractInsnNode.previous(amount: Int): AbstractInsnNode? = skip(amount) { it.previous }
+
+fun AbstractInsnNode.previousWhile(predicate: (AbstractInsnNode) -> Boolean): AbstractInsnNode {
+    return skipWhile(predicate, errorMessage = "All previous instructions matched the given predicate") { it.previous }
+}
+
+fun AbstractInsnNode.previousUntil(predicate: (AbstractInsnNode) -> Boolean): AbstractInsnNode {
+    return skipWhile({ !predicate(it) }, errorMessage = "No previous instruction matched the given predicate") { it.previous }
+}
+
+fun AbstractInsnNode.previousLabel() : LabelNode {
+    return skipWhile({ it !is LabelNode }, errorMessage = "No previous label found") { it.previous } as LabelNode
+}
 
 private fun AbstractInsnNode.skip(amount: Int, next: (AbstractInsnNode) -> AbstractInsnNode?): AbstractInsnNode? {
     var i = 0
@@ -128,6 +153,13 @@ private fun AbstractInsnNode.skip(amount: Int, next: (AbstractInsnNode) -> Abstr
             return null
         ++i
     }
+    return current
+}
+
+private fun AbstractInsnNode.skipWhile(predicate: (AbstractInsnNode) -> Boolean, errorMessage: String, next: (AbstractInsnNode) -> AbstractInsnNode?): AbstractInsnNode {
+    var current: AbstractInsnNode? = this
+    while (predicate(current!!))
+        current = next(current) ?: throw IllegalStateException(errorMessage)
     return current
 }
 

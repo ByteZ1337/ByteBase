@@ -451,7 +451,8 @@ class InsnBuilder {
     // ------------------------- //
     
     fun new(type: String) = add(TypeInsnNode(NEW, type))
-    fun new(type: KClass<*>) = add(TypeInsnNode(NEW, type.qualifiedName!!.replace('.', '/')))
+    fun new(type: KClass<*>) = add(TypeInsnNode(NEW, type.internalName))
+    fun new(type: Class<*>) = add(TypeInsnNode(NEW, type.internalName))
     fun newArray(type: Int) = add(IntInsnNode(NEWARRAY, type))
     fun aNewArray(desc: String) = add(TypeInsnNode(ANEWARRAY, desc))
     fun newBooleanArray() = newArray(T_BOOLEAN)
@@ -466,7 +467,11 @@ class InsnBuilder {
     fun arraylength() = insnOf(ARRAYLENGTH)
     
     fun checkCast(desc: String) = add(TypeInsnNode(CHECKCAST, desc))
+    fun checkCast(type: KClass<*>) = add(TypeInsnNode(CHECKCAST, type.internalName))
+    fun checkCast(type: Class<*>) = add(TypeInsnNode(CHECKCAST, type.internalName))
     fun instanceOf(desc: String) = add(TypeInsnNode(INSTANCEOF, desc))
+    fun instanceOf(type: KClass<*>) = add(TypeInsnNode(INSTANCEOF, type.internalName))
+    fun instanceOf(type: Class<*>) = add(TypeInsnNode(INSTANCEOF, type.internalName))
     
     //</editor-fold>
     

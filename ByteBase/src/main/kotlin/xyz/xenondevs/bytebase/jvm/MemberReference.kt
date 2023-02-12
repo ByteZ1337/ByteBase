@@ -11,23 +11,40 @@ import org.objectweb.asm.tree.MethodNode
 data class MemberReference(
     val owner: String,
     val name: String,
-    val desc: String
+    val desc: String,
+    val type: MemberType? = null
 ) {
     
     /**
      * Attempts to resolve this [MemberReference] to a [FieldNode].
      */
-    fun resolveField(): FieldNode = VirtualClassPath[owner].getField(name, desc)
-        ?: throw NoSuchFieldException("Could not find field $name with descriptor $desc in class $owner")
+    fun resolveField(): FieldNode {
+        if (type == MemberType.METHOD)
+            throw IllegalStateException("MemberReference $this is not a field")
+        return VirtualClassPath[owner].getField(name, desc)
+            ?: throw NoSuchFieldException("Could not find field $name with descriptor $desc in class $owner")
+    }
     
     /**
      * Attempts to resolve this [MemberReference] to a [MethodNode].
      */
-    fun resolveMethod(): MethodNode = VirtualClassPath[owner].getMethod(name, desc)
-        ?: throw NoSuchMethodException("Could not find method $name with descriptor $desc in class $owner")
-    
-    override fun toString(): String {
-        return "$owner.$name$desc"
+    fun resolveMethod(): MethodNode {
+        if (type == MemberType.FIELD)
+            throw IllegalStateException("MemberReference $this is not a method")
+        return VirtualClassPath[owner].getMethod(name, desc)
+            ?: throw NoSuchMethodException("Could not find method $name with descriptor $desc in class $owner")
     }
     
+    override fun toString() =
+        if (type == null || type == MemberType.METHOD) {
+            "$owner.$name$desc"
+        } else {
+            "$owner.$name.$desc"
+        }
+    
+}
+
+enum class MemberType {
+    FIELD,
+    METHOD
 }

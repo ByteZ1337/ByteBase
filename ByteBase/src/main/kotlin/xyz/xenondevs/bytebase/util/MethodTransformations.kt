@@ -161,6 +161,12 @@ fun InsnList.replaceEveryRange(
     }
 }
 
+fun InsnList.insert(index: Int, instructions: InsnList) =
+    insert(get(index), instructions)
+
+fun InsnList.insertBefore(index: Int, instructions: InsnList) =
+    insertBefore(get(index), instructions)
+
 fun MethodNode.insertAfterFirst(instructions: InsnList, match: (AbstractInsnNode) -> Boolean) =
     this.instructions.insertAfterFirst(instructions, match)
 
