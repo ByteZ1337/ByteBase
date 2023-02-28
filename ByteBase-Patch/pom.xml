@@ -2,15 +2,14 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <parent>
-        <artifactId>ByteBase-Parent</artifactId>
-        <groupId>xyz.xenondevs.bytebase</groupId>
-        <version>0.5-SNAPSHOT</version>
-        <relativePath>../pom.xml</relativePath>
-    </parent>
     <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>xyz.xenondevs.bytebase</groupId>
+        <artifactId>ByteBase-Parent</artifactId>
+        <version>0.5-SNAPSHOT</version>
+    </parent>
 
-    <artifactId>ByteBase-Analysis</artifactId>
+    <artifactId>ByteBase-Patch</artifactId>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
@@ -51,6 +50,21 @@
             <groupId>xyz.xenondevs.bytebase</groupId>
             <artifactId>ByteBase</artifactId>
             <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>xyz.xenondevs.bytebase</groupId>
+            <artifactId>ByteBase-Runtime</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains.kotlinx</groupId>
+            <artifactId>kotlinx-metadata-jvm</artifactId>
+            <version>0.5.0</version>
+        </dependency>
+        <dependency>
+            <groupId>it.unimi.dsi</groupId>
+            <artifactId>fastutil</artifactId>
+            <version>8.5.8</version>
         </dependency>
     </dependencies>
 

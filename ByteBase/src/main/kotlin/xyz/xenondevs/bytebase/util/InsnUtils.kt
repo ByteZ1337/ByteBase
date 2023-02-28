@@ -118,30 +118,38 @@ val AbstractInsnNode.doubleValue: Double
 
 fun AbstractInsnNode.next(amount: Int): AbstractInsnNode? = skip(amount) { it.next }
 
-fun AbstractInsnNode.nextWhile(predicate: (AbstractInsnNode) -> Boolean): AbstractInsnNode {
-    return skipWhile(predicate, errorMessage = "All next instructions matched the given predicate") { it.next }
+fun AbstractInsnNode.nextWhile(predicate: (AbstractInsnNode) -> Boolean, includeSelf: Boolean = false): AbstractInsnNode {
+    return skipWhile(predicate, errorMessage = "All next instructions matched the given predicate", includeSelf) { it.next }
 }
 
-fun AbstractInsnNode.nextUntil(predicate: (AbstractInsnNode) -> Boolean): AbstractInsnNode {
-    return skipWhile({ !predicate(it) }, errorMessage = "No next instruction matched the given predicate") { it.next }
+fun AbstractInsnNode.nextUntil(predicate: (AbstractInsnNode) -> Boolean, includeSelf: Boolean = false): AbstractInsnNode {
+    return skipWhile({ !predicate(it) }, errorMessage = "No next instruction matched the given predicate", includeSelf) { it.next }
 }
 
-fun AbstractInsnNode.nextLabel() : LabelNode {
-    return skipWhile({ it !is LabelNode }, errorMessage = "No next label found") { it.next } as LabelNode
+fun AbstractInsnNode.nextLabel(): LabelNode {
+    return skipWhile({ it !is LabelNode }, errorMessage = "No next label found", includeSelf = false) { it.next } as LabelNode
+}
+
+fun AbstractInsnNode.nextLabelOrNull(): LabelNode? {
+    return skipWhileOrNull({ it !is LabelNode }, includeSelf = false) { it.next } as LabelNode?
 }
 
 fun AbstractInsnNode.previous(amount: Int): AbstractInsnNode? = skip(amount) { it.previous }
 
-fun AbstractInsnNode.previousWhile(predicate: (AbstractInsnNode) -> Boolean): AbstractInsnNode {
-    return skipWhile(predicate, errorMessage = "All previous instructions matched the given predicate") { it.previous }
+fun AbstractInsnNode.previousWhile(predicate: (AbstractInsnNode) -> Boolean, includeSelf: Boolean = false): AbstractInsnNode {
+    return skipWhile(predicate, errorMessage = "All previous instructions matched the given predicate", includeSelf) { it.previous }
 }
 
-fun AbstractInsnNode.previousUntil(predicate: (AbstractInsnNode) -> Boolean): AbstractInsnNode {
-    return skipWhile({ !predicate(it) }, errorMessage = "No previous instruction matched the given predicate") { it.previous }
+fun AbstractInsnNode.previousUntil(predicate: (AbstractInsnNode) -> Boolean, includeSelf: Boolean = false): AbstractInsnNode {
+    return skipWhile({ !predicate(it) }, errorMessage = "No previous instruction matched the given predicate", includeSelf) { it.previous }
 }
 
-fun AbstractInsnNode.previousLabel() : LabelNode {
-    return skipWhile({ it !is LabelNode }, errorMessage = "No previous label found") { it.previous } as LabelNode
+fun AbstractInsnNode.previousLabel(): LabelNode {
+    return skipWhile({ it !is LabelNode }, errorMessage = "No previous label found", includeSelf = false) { it.previous } as LabelNode
+}
+
+fun AbstractInsnNode.previousLabelOrNull(): LabelNode? {
+    return skipWhileOrNull({ it !is LabelNode }, includeSelf = false) { it.previous } as LabelNode?
 }
 
 private fun AbstractInsnNode.skip(amount: Int, next: (AbstractInsnNode) -> AbstractInsnNode?): AbstractInsnNode? {
@@ -156,10 +164,17 @@ private fun AbstractInsnNode.skip(amount: Int, next: (AbstractInsnNode) -> Abstr
     return current
 }
 
-private fun AbstractInsnNode.skipWhile(predicate: (AbstractInsnNode) -> Boolean, errorMessage: String, next: (AbstractInsnNode) -> AbstractInsnNode?): AbstractInsnNode {
-    var current: AbstractInsnNode? = this
-    while (predicate(current!!))
+private fun AbstractInsnNode.skipWhile(predicate: (AbstractInsnNode) -> Boolean, errorMessage: String, includeSelf: Boolean, next: (AbstractInsnNode) -> AbstractInsnNode?): AbstractInsnNode {
+    var current: AbstractInsnNode = if (includeSelf) this else next(this) ?: throw IllegalStateException(errorMessage)
+    while (predicate(current))
         current = next(current) ?: throw IllegalStateException(errorMessage)
+    return current
+}
+
+private fun AbstractInsnNode.skipWhileOrNull(predicate: (AbstractInsnNode) -> Boolean, includeSelf: Boolean, next: (AbstractInsnNode) -> AbstractInsnNode?): AbstractInsnNode? {
+    var current: AbstractInsnNode = if (includeSelf) this else next(this) ?: return null
+    while (predicate(current))
+        current = next(current) ?: return null
     return current
 }
 
@@ -224,6 +239,10 @@ fun FieldInsnNode.puts(kProperty: KProperty<*>) =
 
 val FieldInsnNode.reference: MemberReference
     get() = MemberReference(owner, name, desc)
+
+fun InsnList.firstLabel() = first { it is LabelNode } as LabelNode
+
+fun InsnList.lastLabel() = last { it is LabelNode } as LabelNode
 
 /**
  * Removes the given [instructions][insn] from the list

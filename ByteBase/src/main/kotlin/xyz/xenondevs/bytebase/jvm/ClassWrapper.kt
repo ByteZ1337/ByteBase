@@ -9,6 +9,7 @@ import org.objectweb.asm.Type
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.FieldNode
 import org.objectweb.asm.tree.MethodNode
+import org.objectweb.asm.util.TraceClassVisitor
 import xyz.xenondevs.bytebase.asm.ClassWriter
 import xyz.xenondevs.bytebase.asm.OBJECT_CLASS
 import xyz.xenondevs.bytebase.asm.OBJECT_TYPE
@@ -17,6 +18,8 @@ import xyz.xenondevs.bytebase.asm.access.ReferencingAccess
 import xyz.xenondevs.bytebase.asm.buildInsnList
 import xyz.xenondevs.bytebase.util.Int32
 import xyz.xenondevs.bytebase.util.accessWrapper
+import java.io.PrintWriter
+import java.io.StringWriter
 import java.lang.reflect.Constructor
 import java.lang.reflect.Field
 import java.lang.reflect.Method
@@ -99,6 +102,15 @@ class ClassWrapper : ClassNode {
         : this(fileName, ClassReader(byteCode), parsingOptions)
     
     fun assemble(computeFrames: Boolean = true) = ClassWriter(if (computeFrames) COMPUTE_FRAMES else 0).also(this::accept).toByteArray()!!
+    
+    fun disassemble(): String {
+        val writer = StringWriter()
+        val printer = PrintWriter(writer)
+        val visitor = TraceClassVisitor(printer)
+        accept(visitor)
+        printer.flush()
+        return writer.toString()
+    }
     
     //<editor-fold desc="Field getters" defaultstate="collapsed">
     
