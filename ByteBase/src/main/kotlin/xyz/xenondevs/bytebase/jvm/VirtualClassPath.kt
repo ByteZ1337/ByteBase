@@ -63,12 +63,26 @@ object VirtualClassPath {
     
     /**
      * Clears the [classes] and [inheritanceTrees] maps. And loads all [knownJars]. Please note that this will not
-     * reload classes that weren't loaded with [loadJar] or [loadJarWithDependencies].
+     * reload classes that weren't loaded with [loadJar] or [loadJarWithDependencies]. Only use this if all class data
+     * stored in the [VirtualClassPath] is no longer needed.
      */
     fun reload() {
         classes.clear()
         inheritanceTrees.clear()
         loadJarWithDependencies(knownJars.first(), knownJars.drop(1), fromReload = true)
+    }
+    
+    /**
+     * Clears the [classes] and [inheritanceTrees] maps and [knownJars] and [classLoaders] lists. This will completely
+     * clear out the [VirtualClassPath]. Only use this if all data stored in the [VirtualClassPath] is no longer needed.
+     *
+     * @see reload
+     */
+    fun reset() {
+        classes.clear()
+        inheritanceTrees.clear()
+        knownJars.clear()
+        classLoaders.clear()
     }
     
     fun getClass(name: String): ClassWrapper {

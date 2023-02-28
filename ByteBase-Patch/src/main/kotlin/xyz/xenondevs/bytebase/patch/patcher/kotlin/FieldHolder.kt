@@ -15,7 +15,7 @@ class FieldHolder {
     val objectFields = Int2ObjectOpenHashMap<Int2ObjectMap<Any?>>() // identityHashCode -> (fieldName hash -> object)
     
     val identityHashCodes = IntWeakIdentityHashMap<Any> { id -> // Object -> identityHashCode
-        primitiveFields.remove(id)?.let { map -> map.values.forEach { unsafe.freeMemory(it) } }
+        primitiveFields.remove(id)?.values?.forEach(unsafe::freeMemory)
         objectFields.remove(id)
     }
     
