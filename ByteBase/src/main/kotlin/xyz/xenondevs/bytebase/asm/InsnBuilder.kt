@@ -20,6 +20,7 @@ import org.objectweb.asm.tree.VarInsnNode
 import xyz.xenondevs.bytebase.util.Int32
 import xyz.xenondevs.bytebase.util.internalName
 import xyz.xenondevs.bytebase.util.toLdcInsn
+import java.lang.reflect.Constructor
 import java.lang.reflect.Field
 import java.lang.reflect.Method
 import kotlin.reflect.KClass
@@ -423,6 +424,9 @@ class InsnBuilder {
     
     fun invokeSpecial(method: Method, isInterface: Boolean = false) =
         invoke(INVOKESPECIAL, method, isInterface)
+    
+    fun invokeSpecial(constructor: Constructor<*>, isInterface: Boolean = false) =
+        invoke(INVOKESPECIAL, constructor.declaringClass.internalName, "<init>", Type.getConstructorDescriptor(constructor), isInterface)
     
     fun invokeSpecial(kFunction: KFunction<*>, isInterface: Boolean = false) =
         invoke(INVOKESPECIAL, kFunction, isInterface)

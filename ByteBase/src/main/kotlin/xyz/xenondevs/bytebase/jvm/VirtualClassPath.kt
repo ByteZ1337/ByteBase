@@ -2,6 +2,7 @@ package xyz.xenondevs.bytebase.jvm
 
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.Type
+import java.lang.reflect.Constructor
 import java.lang.reflect.Method
 import java.util.*
 import kotlin.reflect.KClass
@@ -120,6 +121,9 @@ object VirtualClassPath {
     operator fun get(method: Method) = getClass(method.declaringClass.name)[method]
         ?: throw NoSuchMethodException("Method ${method.name} not found in ${method.declaringClass.name}")
     
+    operator fun get(constructor: Constructor<*>) = getClass(constructor.declaringClass.name)[constructor]
+        ?: throw NoSuchMethodException("Constructor ${constructor.name} not found in ${constructor.declaringClass.name}")
+    
     fun getInstructions(clazz: Class<*>, method: String, desc: String) =
         getClass(clazz.name).getMethod(method, desc)!!.instructions
     
@@ -134,6 +138,9 @@ object VirtualClassPath {
     
     fun getInstructions(method: Method) =
         getInstructions(method.declaringClass, method.name, Type.getMethodDescriptor(method))
+    
+    fun getInstructions(constructor: Constructor<*>) =
+        getInstructions(constructor.declaringClass, "<init>", Type.getConstructorDescriptor(constructor))
     
     fun getTree(clazz: ClassWrapper, vararg knownSubClasses: ClassWrapper) = getTree(clazz, knownSubClasses.asList())
     
