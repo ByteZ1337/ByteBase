@@ -6,6 +6,8 @@ import java.lang.reflect.Constructor
 import java.lang.reflect.Method
 import java.util.*
 import kotlin.reflect.KClass
+import kotlin.reflect.KFunction
+import kotlin.reflect.jvm.javaMethod
 
 /**
  * A virtual classpath used to build a class hierarchy out of [ClassWrappers][ClassWrapper]. Can be used to process and
@@ -107,6 +109,8 @@ object VirtualClassPath {
     operator fun get(method: Method) = getClass(method.declaringClass.name)[method]
         ?: throw NoSuchMethodException("Method ${method.name} not found in ${method.declaringClass.name}")
     
+    operator fun get(kFunction: KFunction<*>) = get(kFunction.javaMethod!!)
+    
     operator fun get(constructor: Constructor<*>) = getClass(constructor.declaringClass.name)[constructor]
         ?: throw NoSuchMethodException("Constructor ${constructor.name} not found in ${constructor.declaringClass.name}")
     
@@ -124,6 +128,9 @@ object VirtualClassPath {
     
     fun getInstructions(method: Method) =
         getInstructions(method.declaringClass, method.name, Type.getMethodDescriptor(method))
+    
+    fun getInstructions(kFunction: KFunction<*>) = 
+        getInstructions(kFunction.javaMethod!!)
     
     fun getInstructions(constructor: Constructor<*>) =
         getInstructions(constructor.declaringClass, "<init>", Type.getConstructorDescriptor(constructor))

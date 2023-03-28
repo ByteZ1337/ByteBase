@@ -437,6 +437,9 @@ class InsnBuilder {
     fun invokeStatic(method: Method, isInterface: Boolean = false) =
         invoke(INVOKESTATIC, method, isInterface)
     
+    fun invokeStatic(kFunction: KFunction<*>, isInterface: Boolean = false) =
+        invoke(INVOKESTATIC, kFunction, isInterface)
+    
     fun invokeInterface(owner: String, name: String, desc: String, isInterface: Boolean = true) =
         invoke(INVOKEINTERFACE, owner, name, desc, isInterface)
     
