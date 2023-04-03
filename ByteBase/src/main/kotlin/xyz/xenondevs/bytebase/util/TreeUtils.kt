@@ -18,6 +18,9 @@ import kotlin.reflect.KClass
  * Converts an [AnnotationNode] to a map ``name -> value``
  */
 fun AnnotationNode.toMap(): Map<String, Any?> {
+    if (values.isNullOrEmpty())
+        return emptyMap()
+    
     val map = mutableMapOf<String, Any?>()
     for (i in 0 until this.values.size step 2) {
         map[this.values[i].toString()] = this.values[i + 1]
