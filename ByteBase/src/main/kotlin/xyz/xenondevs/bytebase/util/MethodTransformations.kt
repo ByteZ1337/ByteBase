@@ -75,18 +75,35 @@ fun InsnList.replaceFirst(dropBefore: Int, dropAfter: Int, instructions: InsnLis
 }
 
 fun InsnList.replaceNth(nth: Int, dropBefore: Int, dropAfter: Int, instructions: InsnList, match: (AbstractInsnNode) -> Boolean) {
+    replaceNthAfter(nth, dropBefore, dropAfter, instructions, match = match)
+}
+
+fun InsnList.replaceFirstAfter(dropBefore: Int, dropAfter: Int, instructions: InsnList, vararg preMatch: (AbstractInsnNode) -> Boolean, match: (AbstractInsnNode) -> Boolean) {
+    replaceNthAfter(0, dropBefore, dropAfter, instructions, preMatch = preMatch, match = match)
+}
+
+fun InsnList.replaceNthAfter(nth: Int, dropBefore: Int, dropAfter: Int, instructions: InsnList, vararg preMatch: (AbstractInsnNode) -> Boolean, match: (AbstractInsnNode) -> Boolean) {
+    var preMatchIdx = 0
+    
     var matchIdx = 0
     var insnIdx = 0
     val iterator = iterator()
     while (iterator.hasNext()) {
         val insn = iterator.next()
-        if (match(insn)) {
+        
+        if (preMatchIdx < preMatch.size) {
+            val preMatcher = preMatch[preMatchIdx]
+            if (preMatcher(insn)) {
+                preMatchIdx++
+            }
+        } else if (match(insn)) {
             if (matchIdx == nth) {
                 replaceRange(insnIdx - dropBefore, insnIdx + dropAfter, instructions)
                 break
             }
             
             matchIdx++
+            preMatchIdx = 0
         }
         
         insnIdx++
@@ -215,6 +232,12 @@ fun MethodNode.replaceFirst(dropBefore: Int, dropAfter: Int, instructions: InsnL
 
 fun MethodNode.replaceNth(nth: Int, dropBefore: Int, dropAfter: Int, instructions: InsnList, match: (AbstractInsnNode) -> Boolean) =
     this.instructions.replaceNth(nth, dropBefore, dropAfter, instructions, match)
+
+fun MethodNode.replaceFirstAfter(dropBefore: Int, dropAfter: Int, instructions: InsnList, vararg preMatch: (AbstractInsnNode) -> Boolean, match: (AbstractInsnNode) -> Boolean) =
+    this.instructions.replaceFirstAfter(dropBefore, dropAfter, instructions, preMatch = preMatch, match = match)
+
+fun MethodNode.replaceNthAfter(nth: Int, dropBefore: Int, dropAfter: Int, instructions: InsnList, vararg preMatch: (AbstractInsnNode) -> Boolean, match: (AbstractInsnNode) -> Boolean) =
+    this.instructions.replaceNthAfter(nth, dropBefore, dropAfter, instructions, preMatch = preMatch, match = match)
 
 fun MethodNode.replaceEvery(dropBefore: Int, dropAfter: Int, instructions: InsnList, match: (AbstractInsnNode) -> Boolean) =
     this.instructions.replaceEvery(dropBefore, dropAfter, instructions, match)
