@@ -25,6 +25,21 @@ private fun InsnList.insertAtEvery(match: (AbstractInsnNode) -> Boolean, inserti
     }
 }
 
+private fun InsnList.insertAtLast(match: (AbstractInsnNode) -> Boolean, insertion: (AbstractInsnNode, InsnList) -> Unit) {
+    var lastMatch: AbstractInsnNode? = null
+    val iterator = iterator()
+    while (iterator.hasNext()) {
+        val insn = iterator.next()
+        if (match(insn)) {
+            lastMatch = insn
+        }
+    }
+    
+    if (lastMatch != null) {
+        insertion(lastMatch, this)
+    }
+}
+
 fun InsnList.insertAfterFirst(instructions: InsnList, match: (AbstractInsnNode) -> Boolean) =
     insertAtFirst(match) { insn, list ->
         list.insert(insn, instructions)
@@ -35,6 +50,11 @@ fun InsnList.insertAfterEvery(instructions: InsnList, match: (AbstractInsnNode) 
         list.insert(insn, instructions.copy())
     }
 
+fun InsnList.insertAfterLast(instructions: InsnList, match: (AbstractInsnNode) -> Boolean) =
+    insertAtLast(match) { insn, list ->
+        list.insert(insn, instructions)
+    }
+
 fun InsnList.insertBeforeFirst(instructions: InsnList, match: (AbstractInsnNode) -> Boolean) =
     insertAtFirst(match) { insn, list ->
         list.insertBefore(insn, instructions)
@@ -43,6 +63,11 @@ fun InsnList.insertBeforeFirst(instructions: InsnList, match: (AbstractInsnNode)
 fun InsnList.insertBeforeEvery(instructions: InsnList, match: (AbstractInsnNode) -> Boolean) =
     insertAtEvery(match) { insn, list ->
         list.insertBefore(insn, instructions.copy())
+    }
+
+fun InsnList.insertBeforeLast(instructions: InsnList, match: (AbstractInsnNode) -> Boolean) =
+    insertAtLast(match) { insn, list ->
+        list.insertBefore(insn, instructions)
     }
 
 fun InsnList.replaceFirst(dropBefore: Int, dropAfter: Int, instructions: InsnList, match: (AbstractInsnNode) -> Boolean) {
@@ -173,8 +198,14 @@ fun MethodNode.insertAfterFirst(instructions: InsnList, match: (AbstractInsnNode
 fun MethodNode.insertAfterEvery(instructions: InsnList, match: (AbstractInsnNode) -> Boolean) =
     this.instructions.insertAfterEvery(instructions, match)
 
+fun MethodNode.insertAfterLast(instructions: InsnList, match: (AbstractInsnNode) -> Boolean) =
+    this.instructions.insertAfterLast(instructions, match)
+
 fun MethodNode.insertBeforeFirst(instructions: InsnList, match: (AbstractInsnNode) -> Boolean) =
     this.instructions.insertBeforeFirst(instructions, match)
+
+fun MethodNode.insertBeforeLast(instructions: InsnList, match: (AbstractInsnNode) -> Boolean) =
+    this.instructions.insertBeforeLast(instructions, match)
 
 fun MethodNode.insertBeforeEvery(instructions: InsnList, match: (AbstractInsnNode) -> Boolean) =
     this.instructions.insertBeforeEvery(instructions, match)
