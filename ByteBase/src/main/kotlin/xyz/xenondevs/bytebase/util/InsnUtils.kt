@@ -11,7 +11,13 @@ import org.objectweb.asm.tree.LabelNode
 import org.objectweb.asm.tree.LdcInsnNode
 import org.objectweb.asm.tree.MethodInsnNode
 import org.objectweb.asm.tree.TypeInsnNode
+import org.objectweb.asm.util.Textifier
+import org.objectweb.asm.util.TraceClassVisitor
+import org.objectweb.asm.util.TraceMethodVisitor
+import xyz.xenondevs.bytebase.jvm.ClassWrapper
 import xyz.xenondevs.bytebase.jvm.MemberReference
+import java.io.PrintWriter
+import java.io.StringWriter
 import java.lang.reflect.Constructor
 import java.lang.reflect.Field
 import java.lang.reflect.Method
@@ -258,4 +264,18 @@ fun InsnList.replaceRange(from: Int, to: Int, insnList: InsnList) {
 fun InsnList.replaceRange(from: Int, to: Int, insn: AbstractInsnNode) {
     repeat(to - from + 1) { remove(get(from)) }
     insertBefore(get(from), insn)
+}
+
+fun ClassWrapper.disassemble(): String {
+    val writer = StringWriter()
+    this.accept(TraceClassVisitor(null, Textifier(), PrintWriter(writer)))
+    return writer.toString()
+}
+
+fun InsnList.disassemble(): String {
+    val textifier = Textifier()
+    this.accept(TraceMethodVisitor(textifier))
+    val writer = StringWriter()
+    textifier.print(PrintWriter(writer))
+    return writer.toString()
 }
