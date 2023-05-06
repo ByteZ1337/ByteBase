@@ -128,8 +128,9 @@ fun InsnList.replaceEvery(dropBefore: Int, dropAfter: Int, builder: InsnBuilder.
     var offset = 0
     ranges.forEach { range ->
         val insns = buildInsnList(builder)
+        val size = insns.size()
         replaceRange(offset + range.first, offset + range.last, insns)
-        offset += insns.size() - (dropBefore + dropAfter + 1)
+        offset += size - (dropBefore + dropAfter + 1)
     }
 }
 
@@ -202,8 +203,9 @@ fun InsnList.replaceEveryRange(
     var offset = 0
     ranges.forEach { range ->
         val insns = buildInsnList(builder)
+        val size = insns.size()
         replaceRange(offset + range.first, offset + range.last, insns)
-        offset += insns.size() - (range.last - range.first + 1)
+        offset += size - (range.last - range.first + 1)
     }
 }
 
