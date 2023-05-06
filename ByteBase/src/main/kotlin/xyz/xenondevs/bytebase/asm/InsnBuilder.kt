@@ -501,4 +501,4 @@ class InsnBuilder {
 }
 
 @InsnDsl
-fun buildInsnList(builder: InsnBuilder.() -> Unit) = InsnBuilder().apply(builder).list
+inline fun buildInsnList(builder: InsnBuilder.() -> Unit) = InsnBuilder().apply(builder).list
