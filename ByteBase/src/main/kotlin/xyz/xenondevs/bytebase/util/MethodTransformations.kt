@@ -3,6 +3,8 @@ package xyz.xenondevs.bytebase.util
 import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.InsnList
 import org.objectweb.asm.tree.MethodNode
+import xyz.xenondevs.bytebase.asm.InsnBuilder
+import xyz.xenondevs.bytebase.asm.buildInsnList
 
 private fun InsnList.insertAtFirst(match: (AbstractInsnNode) -> Boolean, insertion: (AbstractInsnNode, InsnList) -> Unit) {
     val iterator = iterator()
@@ -110,7 +112,7 @@ fun InsnList.replaceNthAfter(nth: Int, dropBefore: Int, dropAfter: Int, instruct
     }
 }
 
-fun InsnList.replaceEvery(dropBefore: Int, dropAfter: Int, instructions: InsnList, match: (AbstractInsnNode) -> Boolean) {
+fun InsnList.replaceEvery(dropBefore: Int, dropAfter: Int, builder: InsnBuilder.() -> Unit, match: (AbstractInsnNode) -> Boolean) {
     val ranges = ArrayList<IntRange>()
     
     var insnIdx = 0
@@ -123,10 +125,11 @@ fun InsnList.replaceEvery(dropBefore: Int, dropAfter: Int, instructions: InsnLis
         insnIdx++
     }
     
-    val idxChange = instructions.size() - (dropBefore + dropAfter + 1)
-    ranges.forEachIndexed { offsetIdx, range ->
-        val offset = offsetIdx * idxChange
-        replaceRange(offset + range.first, offset + range.last, instructions.copy())
+    var offset = 0
+    ranges.forEach { range ->
+        val insns = buildInsnList(builder)
+        replaceRange(offset + range.first, offset + range.last, insns)
+        offset += insns.size() - (dropBefore + dropAfter + 1)
     }
 }
 
@@ -176,7 +179,7 @@ fun InsnList.replaceEveryRange(
     end: (AbstractInsnNode) -> Boolean,
     dropBefore: Int,
     dropAfter: Int,
-    instructions: InsnList
+    builder: InsnBuilder.() -> Unit
 ) {
     val ranges = ArrayList<IntRange>()
     
@@ -198,8 +201,9 @@ fun InsnList.replaceEveryRange(
     
     var offset = 0
     ranges.forEach { range ->
-        replaceRange(offset + range.first, offset + range.last, instructions.copy())
-        offset += instructions.size() - (range.last - range.first + 1)
+        val insns = buildInsnList(builder)
+        replaceRange(offset + range.first, offset + range.last, insns)
+        offset += insns.size() - (range.last - range.first + 1)
     }
 }
 
@@ -239,8 +243,8 @@ fun MethodNode.replaceFirstAfter(dropBefore: Int, dropAfter: Int, instructions: 
 fun MethodNode.replaceNthAfter(nth: Int, dropBefore: Int, dropAfter: Int, instructions: InsnList, vararg preMatch: (AbstractInsnNode) -> Boolean, match: (AbstractInsnNode) -> Boolean) =
     this.instructions.replaceNthAfter(nth, dropBefore, dropAfter, instructions, preMatch = preMatch, match = match)
 
-fun MethodNode.replaceEvery(dropBefore: Int, dropAfter: Int, instructions: InsnList, match: (AbstractInsnNode) -> Boolean) =
-    this.instructions.replaceEvery(dropBefore, dropAfter, instructions, match)
+fun MethodNode.replaceEvery(dropBefore: Int, dropAfter: Int, builder: InsnBuilder.() -> Unit, match: (AbstractInsnNode) -> Boolean) =
+    this.instructions.replaceEvery(dropBefore, dropAfter, builder, match)
 
 fun MethodNode.replaceFirstRange(start: (AbstractInsnNode) -> Boolean, end: (AbstractInsnNode) -> Boolean, dropBefore: Int, dropAfter: Int, instructions: InsnList) =
     this.instructions.replaceFirstRange(start, end, dropBefore, dropAfter, instructions)
@@ -248,5 +252,5 @@ fun MethodNode.replaceFirstRange(start: (AbstractInsnNode) -> Boolean, end: (Abs
 fun MethodNode.replaceNthRange(n: Int, start: (AbstractInsnNode) -> Boolean, end: (AbstractInsnNode) -> Boolean, dropBefore: Int, dropAfter: Int, instructions: InsnList) =
     this.instructions.replaceNthRange(n, start, end, dropBefore, dropAfter, instructions)
 
-fun MethodNode.replaceEveryRange(start: (AbstractInsnNode) -> Boolean, end: (AbstractInsnNode) -> Boolean, dropBefore: Int, dropAfter: Int, instructions: InsnList) =
-    this.instructions.replaceEveryRange(start, end, dropBefore, dropAfter, instructions)
+fun MethodNode.replaceEveryRange(start: (AbstractInsnNode) -> Boolean, end: (AbstractInsnNode) -> Boolean, dropBefore: Int, dropAfter: Int, builder: InsnBuilder.() -> Unit) =
+    this.instructions.replaceEveryRange(start, end, dropBefore, dropAfter, builder)
