@@ -70,7 +70,11 @@ build
 atlassian-ide-plugin.xml
 
 # Target directories shouldn't be added to git
-target/
+./target/
+ByteBase/target
+ByteBase-Analysis/target
+ByteBase-Patch/target
+ByteBase-Runtime/target
 
 # Eclipse Recommenders are really unnecessary for git
 .recommenders/
