@@ -447,10 +447,13 @@ class InsnBuilder {
     
     fun invokeStatic(method: Method, isInterface: Boolean = false) =
         invoke(INVOKESTATIC, method, isInterface)
+
+    fun invokeStatic(kFunction: KFunction<*>, isInterface: Boolean = false) =
+        invoke(INVOKESTATIC, kFunction, isInterface)
     
     fun invokeStatic(ref: MemberReference, isInterface: Boolean = false) =
         invoke(INVOKESTATIC, ref.owner, ref.name, ref.desc, isInterface)
-    
+            
     fun invokeInterface(owner: String, name: String, desc: String, isInterface: Boolean = true) =
         invoke(INVOKEINTERFACE, owner, name, desc, isInterface)
     
@@ -515,4 +518,4 @@ class InsnBuilder {
 }
 
 @InsnDsl
-fun buildInsnList(builder: InsnBuilder.() -> Unit) = InsnBuilder().apply(builder).list
+inline fun buildInsnList(builder: InsnBuilder.() -> Unit) = InsnBuilder().apply(builder).list

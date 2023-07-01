@@ -3,6 +3,8 @@ package xyz.xenondevs.bytebase.util
 import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.InsnList
 import org.objectweb.asm.tree.MethodNode
+import xyz.xenondevs.bytebase.asm.InsnBuilder
+import xyz.xenondevs.bytebase.asm.buildInsnList
 
 private fun InsnList.insertAtFirst(match: (AbstractInsnNode) -> Boolean, insertion: (AbstractInsnNode, InsnList) -> Unit) {
     val iterator = iterator()
@@ -25,6 +27,21 @@ private fun InsnList.insertAtEvery(match: (AbstractInsnNode) -> Boolean, inserti
     }
 }
 
+private fun InsnList.insertAtLast(match: (AbstractInsnNode) -> Boolean, insertion: (AbstractInsnNode, InsnList) -> Unit) {
+    var lastMatch: AbstractInsnNode? = null
+    val iterator = iterator()
+    while (iterator.hasNext()) {
+        val insn = iterator.next()
+        if (match(insn)) {
+            lastMatch = insn
+        }
+    }
+    
+    if (lastMatch != null) {
+        insertion(lastMatch, this)
+    }
+}
+
 fun InsnList.insertAfterFirst(instructions: InsnList, match: (AbstractInsnNode) -> Boolean) =
     insertAtFirst(match) { insn, list ->
         list.insert(insn, instructions)
@@ -33,6 +50,11 @@ fun InsnList.insertAfterFirst(instructions: InsnList, match: (AbstractInsnNode) 
 fun InsnList.insertAfterEvery(instructions: InsnList, match: (AbstractInsnNode) -> Boolean) =
     insertAtEvery(match) { insn, list ->
         list.insert(insn, instructions.copy())
+    }
+
+fun InsnList.insertAfterLast(instructions: InsnList, match: (AbstractInsnNode) -> Boolean) =
+    insertAtLast(match) { insn, list ->
+        list.insert(insn, instructions)
     }
 
 fun InsnList.insertBeforeFirst(instructions: InsnList, match: (AbstractInsnNode) -> Boolean) =
@@ -45,30 +67,52 @@ fun InsnList.insertBeforeEvery(instructions: InsnList, match: (AbstractInsnNode)
         list.insertBefore(insn, instructions.copy())
     }
 
+fun InsnList.insertBeforeLast(instructions: InsnList, match: (AbstractInsnNode) -> Boolean) =
+    insertAtLast(match) { insn, list ->
+        list.insertBefore(insn, instructions)
+    }
+
 fun InsnList.replaceFirst(dropBefore: Int, dropAfter: Int, instructions: InsnList, match: (AbstractInsnNode) -> Boolean) {
     replaceNth(0, dropBefore, dropAfter, instructions, match)
 }
 
 fun InsnList.replaceNth(nth: Int, dropBefore: Int, dropAfter: Int, instructions: InsnList, match: (AbstractInsnNode) -> Boolean) {
+    replaceNthAfter(nth, dropBefore, dropAfter, instructions, match = match)
+}
+
+fun InsnList.replaceFirstAfter(dropBefore: Int, dropAfter: Int, instructions: InsnList, vararg preMatch: (AbstractInsnNode) -> Boolean, match: (AbstractInsnNode) -> Boolean) {
+    replaceNthAfter(0, dropBefore, dropAfter, instructions, preMatch = preMatch, match = match)
+}
+
+fun InsnList.replaceNthAfter(nth: Int, dropBefore: Int, dropAfter: Int, instructions: InsnList, vararg preMatch: (AbstractInsnNode) -> Boolean, match: (AbstractInsnNode) -> Boolean) {
+    var preMatchIdx = 0
+    
     var matchIdx = 0
     var insnIdx = 0
     val iterator = iterator()
     while (iterator.hasNext()) {
         val insn = iterator.next()
-        if (match(insn)) {
+        
+        if (preMatchIdx < preMatch.size) {
+            val preMatcher = preMatch[preMatchIdx]
+            if (preMatcher(insn)) {
+                preMatchIdx++
+            }
+        } else if (match(insn)) {
             if (matchIdx == nth) {
                 replaceRange(insnIdx - dropBefore, insnIdx + dropAfter, instructions)
                 break
             }
             
             matchIdx++
+            preMatchIdx = 0
         }
         
         insnIdx++
     }
 }
 
-fun InsnList.replaceEvery(dropBefore: Int, dropAfter: Int, instructions: InsnList, match: (AbstractInsnNode) -> Boolean) {
+fun InsnList.replaceEvery(dropBefore: Int, dropAfter: Int, builder: InsnBuilder.() -> Unit, match: (AbstractInsnNode) -> Boolean) {
     val ranges = ArrayList<IntRange>()
     
     var insnIdx = 0
@@ -81,10 +125,12 @@ fun InsnList.replaceEvery(dropBefore: Int, dropAfter: Int, instructions: InsnLis
         insnIdx++
     }
     
-    val idxChange = instructions.size() - (dropBefore + dropAfter + 1)
-    ranges.forEachIndexed { offsetIdx, range ->
-        val offset = offsetIdx * idxChange
-        replaceRange(offset + range.first, offset + range.last, instructions.copy())
+    var offset = 0
+    ranges.forEach { range ->
+        val insns = buildInsnList(builder)
+        val size = insns.size()
+        replaceRange(offset + range.first, offset + range.last, insns)
+        offset += size - (dropBefore + dropAfter + 1)
     }
 }
 
@@ -134,7 +180,7 @@ fun InsnList.replaceEveryRange(
     end: (AbstractInsnNode) -> Boolean,
     dropBefore: Int,
     dropAfter: Int,
-    instructions: InsnList
+    builder: InsnBuilder.() -> Unit
 ) {
     val ranges = ArrayList<IntRange>()
     
@@ -156,8 +202,10 @@ fun InsnList.replaceEveryRange(
     
     var offset = 0
     ranges.forEach { range ->
-        replaceRange(offset + range.first, offset + range.last, instructions.copy())
-        offset += instructions.size() - (range.last - range.first + 1)
+        val insns = buildInsnList(builder)
+        val size = insns.size()
+        replaceRange(offset + range.first, offset + range.last, insns)
+        offset += size - (range.last - range.first + 1)
     }
 }
 
@@ -173,8 +221,14 @@ fun MethodNode.insertAfterFirst(instructions: InsnList, match: (AbstractInsnNode
 fun MethodNode.insertAfterEvery(instructions: InsnList, match: (AbstractInsnNode) -> Boolean) =
     this.instructions.insertAfterEvery(instructions, match)
 
+fun MethodNode.insertAfterLast(instructions: InsnList, match: (AbstractInsnNode) -> Boolean) =
+    this.instructions.insertAfterLast(instructions, match)
+
 fun MethodNode.insertBeforeFirst(instructions: InsnList, match: (AbstractInsnNode) -> Boolean) =
     this.instructions.insertBeforeFirst(instructions, match)
+
+fun MethodNode.insertBeforeLast(instructions: InsnList, match: (AbstractInsnNode) -> Boolean) =
+    this.instructions.insertBeforeLast(instructions, match)
 
 fun MethodNode.insertBeforeEvery(instructions: InsnList, match: (AbstractInsnNode) -> Boolean) =
     this.instructions.insertBeforeEvery(instructions, match)
@@ -185,8 +239,14 @@ fun MethodNode.replaceFirst(dropBefore: Int, dropAfter: Int, instructions: InsnL
 fun MethodNode.replaceNth(nth: Int, dropBefore: Int, dropAfter: Int, instructions: InsnList, match: (AbstractInsnNode) -> Boolean) =
     this.instructions.replaceNth(nth, dropBefore, dropAfter, instructions, match)
 
-fun MethodNode.replaceEvery(dropBefore: Int, dropAfter: Int, instructions: InsnList, match: (AbstractInsnNode) -> Boolean) =
-    this.instructions.replaceEvery(dropBefore, dropAfter, instructions, match)
+fun MethodNode.replaceFirstAfter(dropBefore: Int, dropAfter: Int, instructions: InsnList, vararg preMatch: (AbstractInsnNode) -> Boolean, match: (AbstractInsnNode) -> Boolean) =
+    this.instructions.replaceFirstAfter(dropBefore, dropAfter, instructions, preMatch = preMatch, match = match)
+
+fun MethodNode.replaceNthAfter(nth: Int, dropBefore: Int, dropAfter: Int, instructions: InsnList, vararg preMatch: (AbstractInsnNode) -> Boolean, match: (AbstractInsnNode) -> Boolean) =
+    this.instructions.replaceNthAfter(nth, dropBefore, dropAfter, instructions, preMatch = preMatch, match = match)
+
+fun MethodNode.replaceEvery(dropBefore: Int, dropAfter: Int, builder: InsnBuilder.() -> Unit, match: (AbstractInsnNode) -> Boolean) =
+    this.instructions.replaceEvery(dropBefore, dropAfter, builder, match)
 
 fun MethodNode.replaceFirstRange(start: (AbstractInsnNode) -> Boolean, end: (AbstractInsnNode) -> Boolean, dropBefore: Int, dropAfter: Int, instructions: InsnList) =
     this.instructions.replaceFirstRange(start, end, dropBefore, dropAfter, instructions)
@@ -194,5 +254,5 @@ fun MethodNode.replaceFirstRange(start: (AbstractInsnNode) -> Boolean, end: (Abs
 fun MethodNode.replaceNthRange(n: Int, start: (AbstractInsnNode) -> Boolean, end: (AbstractInsnNode) -> Boolean, dropBefore: Int, dropAfter: Int, instructions: InsnList) =
     this.instructions.replaceNthRange(n, start, end, dropBefore, dropAfter, instructions)
 
-fun MethodNode.replaceEveryRange(start: (AbstractInsnNode) -> Boolean, end: (AbstractInsnNode) -> Boolean, dropBefore: Int, dropAfter: Int, instructions: InsnList) =
-    this.instructions.replaceEveryRange(start, end, dropBefore, dropAfter, instructions)
+fun MethodNode.replaceEveryRange(start: (AbstractInsnNode) -> Boolean, end: (AbstractInsnNode) -> Boolean, dropBefore: Int, dropAfter: Int, builder: InsnBuilder.() -> Unit) =
+    this.instructions.replaceEveryRange(start, end, dropBefore, dropAfter, builder)
