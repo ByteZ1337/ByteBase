@@ -17,6 +17,7 @@ import org.objectweb.asm.tree.LdcInsnNode
 import org.objectweb.asm.tree.MethodInsnNode
 import org.objectweb.asm.tree.TypeInsnNode
 import org.objectweb.asm.tree.VarInsnNode
+import xyz.xenondevs.bytebase.jvm.MemberReference
 import xyz.xenondevs.bytebase.util.Int32
 import xyz.xenondevs.bytebase.util.internalName
 import xyz.xenondevs.bytebase.util.toLdcInsn
@@ -375,15 +376,19 @@ class InsnBuilder {
     fun getStatic(owner: String, name: String, desc: String) = getField(GETSTATIC, owner, name, desc)
     fun getStatic(field: Field) = getField(GETSTATIC, field)
     fun getStatic(kProperty: KProperty<*>) = getField(GETSTATIC, kProperty)
+    fun getStatic(ref: MemberReference) = getField(GETSTATIC, ref.owner, ref.name, ref.desc)
     fun putStatic(owner: String, name: String, desc: String) = getField(PUTSTATIC, owner, name, desc)
     fun putStatic(field: Field) = getField(PUTSTATIC, field)
     fun putStatic(kProperty: KProperty<*>) = getField(PUTSTATIC, kProperty)
+    fun putStatic(ref: MemberReference) = getField(PUTSTATIC, ref.owner, ref.name, ref.desc)
     fun getField(owner: String, name: String, desc: String) = getField(GETFIELD, owner, name, desc)
     fun getField(field: Field) = getField(GETFIELD, field)
     fun getField(kProperty: KProperty<*>) = getField(GETFIELD, kProperty)
+    fun getField(ref: MemberReference) = getField(GETFIELD, ref.owner, ref.name, ref.desc)
     fun putField(owner: String, name: String, desc: String) = getField(PUTFIELD, owner, name, desc)
     fun putField(field: Field) = getField(PUTFIELD, field)
     fun putField(kProperty: KProperty<*>) = getField(PUTFIELD, kProperty)
+    fun putField(ref: MemberReference) = getField(PUTFIELD, ref.owner, ref.name, ref.desc)
     
     //</editor-fold>
     
@@ -419,6 +424,9 @@ class InsnBuilder {
     fun invokeVirtual(kFunction: KFunction<*>, isInterface: Boolean = false) =
         invoke(INVOKEVIRTUAL, kFunction, isInterface)
     
+    fun invokeVirtual(ref: MemberReference, isInterface: Boolean = false) =
+        invoke(INVOKEVIRTUAL, ref.owner, ref.name, ref.desc, isInterface)
+    
     fun invokeSpecial(owner: String, name: String, desc: String, isInterface: Boolean = false) =
         invoke(INVOKESPECIAL, owner, name, desc, isInterface)
     
@@ -431,11 +439,17 @@ class InsnBuilder {
     fun invokeSpecial(kFunction: KFunction<*>, isInterface: Boolean = false) =
         invoke(INVOKESPECIAL, kFunction, isInterface)
     
+    fun invokeSpecial(ref: MemberReference, isInterface: Boolean = false) =
+        invoke(INVOKESPECIAL, ref.owner, ref.name, ref.desc, isInterface)
+    
     fun invokeStatic(owner: String, name: String, desc: String, isInterface: Boolean = false) =
         invoke(INVOKESTATIC, owner, name, desc, isInterface)
     
     fun invokeStatic(method: Method, isInterface: Boolean = false) =
         invoke(INVOKESTATIC, method, isInterface)
+    
+    fun invokeStatic(ref: MemberReference, isInterface: Boolean = false) =
+        invoke(INVOKESTATIC, ref.owner, ref.name, ref.desc, isInterface)
     
     fun invokeInterface(owner: String, name: String, desc: String, isInterface: Boolean = true) =
         invoke(INVOKEINTERFACE, owner, name, desc, isInterface)
@@ -445,6 +459,9 @@ class InsnBuilder {
     
     fun invokeInterface(kFunction: KFunction<*>, isInterface: Boolean = true) =
         invoke(INVOKEINTERFACE, kFunction, isInterface)
+    
+    fun invokeInterface(ref: MemberReference, isInterface: Boolean = false) =
+        invoke(INVOKEINTERFACE, ref.owner, ref.name, ref.desc, isInterface)
     
     //</editor-fold>
     
