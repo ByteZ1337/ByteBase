@@ -12,6 +12,8 @@ import kotlin.reflect.jvm.javaMethod
 /**
  * A virtual classpath used to build a class hierarchy out of [ClassWrappers][ClassWrapper]. Can be used to process and
  * check inheritance via [InheritanceTrees][InheritanceTree].
+ *
+ * TODO: abstract class support instead of singleton
  */
 object VirtualClassPath {
     

@@ -13,8 +13,7 @@ package xyz.xenondevs.bytebase.patch.annotation
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.PROPERTY, AnnotationTarget.FIELD)
 annotation class FieldAccessor(
-    val name: String,
-    val desc: String,
-    val overwriteAccess: Boolean = false,
+    val name: String = "",
+    val desc: String = "",
     val makeMutable: Boolean = false
 )

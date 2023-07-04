@@ -519,3 +519,6 @@ class InsnBuilder {
 
 @InsnDsl
 inline fun buildInsnList(builder: InsnBuilder.() -> Unit) = InsnBuilder().apply(builder).list
+
+@InsnDsl
+inline fun insnListOf(vararg insns: AbstractInsnNode) = InsnList().apply { insns.forEach { add(it) } }

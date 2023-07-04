@@ -35,6 +35,11 @@ data class MemberReference(
             ?: throw NoSuchMethodException("Could not find method $name with descriptor $desc in class $owner")
     }
     
+    /**
+     * Attempts to resolve the owner of this [MemberReference] to a [ClassWrapper].
+     */
+    fun resolveOwner() = VirtualClassPath[owner]
+    
     override fun toString() =
         if (type == null || type == MemberType.METHOD) {
             "$owner.$name$desc"

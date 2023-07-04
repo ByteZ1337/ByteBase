@@ -1,7 +1,5 @@
 package xyz.xenondevs.bytebase.patch.patcher.kotlin
 
-import org.objectweb.asm.ClassVisitor
-import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.FrameNode
@@ -34,7 +32,7 @@ import kotlin.reflect.jvm.javaMethod
 internal class MethodPatcher(
     val patch: Patcher.LoadedPatch,
     val newClass: ClassWrapper,
-    val fieldCallRemapper: (MethodVisitor) -> MethodVisitor
+    val fieldCallRemapper: (MethodNode) -> Unit
 ) {
     
     fun patchMethods() {
@@ -56,7 +54,7 @@ internal class MethodPatcher(
         val target = getAndRemoveTarget(replaceAnnotation.target)
         newClass.methods.removeIf { it.name == target.name && it.desc == target.desc }
         val patchedMethod = VirtualClassPath[function.javaMethod!!]
-        patchedMethod.accept(RemapVisitor(newClass, target))
+        fieldCallRemapper(patchedMethod)
     }
     
     private fun injectMethod(function: KFunction<*>, inject: Inject) {
@@ -83,15 +81,17 @@ internal class MethodPatcher(
         if (returnLabel != null) {
             val jumpLabel = returnLabel.nextLabelOrNull()
             if (jumpLabel != null) {
-                instructions.insertBefore(returnLabel, buildInsnList {
-                    addLabel()
+                instructions.insert(returnLabel, buildInsnList {
                     goto(jumpLabel)
+                    addLabel()
                 })
             }
         }
         
         // Add the patched method to the class
-        newClass.methods.add(MethodNode(target.access, target.name, target.desc, null, null).apply { this.instructions = instructions })
+        val newMethod = MethodNode(target.access, target.name, target.desc, null, null).apply { this.instructions = instructions }
+        newClass.methods.add(newMethod)
+        fieldCallRemapper(newMethod)
     }
     
     private fun getAndRemoveTarget(targetMethod: String): MethodNode {
@@ -175,15 +175,6 @@ internal class MethodPatcher(
             """.trimMargin())
         }
         return firstInsnIndex to lastInsnIndex
-    }
-    
-    private inner class RemapVisitor(parent: ClassVisitor, val oldMethod: MethodNode) : ClassVisitor(Opcodes.ASM9, parent) {
-        
-        override fun visitMethod(access: Int, name: String, descriptor: String, signature: String?, exceptions: Array<out String>?): MethodVisitor {
-            val superVisitor = super.visitMethod(oldMethod.access, oldMethod.name, oldMethod.desc, oldMethod.signature, oldMethod.exceptions.toTypedArray())
-            return fieldCallRemapper(superVisitor)
-        }
-        
     }
     
 }

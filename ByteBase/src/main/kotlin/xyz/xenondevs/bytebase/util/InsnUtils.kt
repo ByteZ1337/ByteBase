@@ -217,9 +217,15 @@ val MethodInsnNode.reference: MemberReference
 fun FieldInsnNode.accesses(owner: String, name: String, desc: String) =
     this.owner == owner && this.name == name && this.desc == desc
 
+fun FieldInsnNode.isGet() =
+    this.opcode == Opcodes.GETFIELD || this.opcode == Opcodes.GETSTATIC
+
 fun FieldInsnNode.gets(owner: String, name: String, desc: String) =
     (this.opcode == Opcodes.GETFIELD || this.opcode == Opcodes.GETSTATIC)
         && this.owner == owner && this.name == name && this.desc == desc
+
+fun FieldInsnNode.isPut() =
+    this.opcode == Opcodes.PUTFIELD || this.opcode == Opcodes.PUTSTATIC
 
 fun FieldInsnNode.puts(owner: String, name: String, desc: String) =
     (this.opcode == Opcodes.PUTFIELD || this.opcode == Opcodes.PUTSTATIC)

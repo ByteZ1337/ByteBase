@@ -146,7 +146,7 @@ class ClassWrapper : ClassNode {
         val method = getMethod(name, desc)
         if (method != null) return method
         val newMethod = MethodNode(access, name, desc, null, null)
-        newMethod.instructions = buildInsnList { _return() }
+        newMethod.instructions = buildInsnList { addLabel(); _return() }
         methods?.add(newMethod)
         return newMethod
     }
