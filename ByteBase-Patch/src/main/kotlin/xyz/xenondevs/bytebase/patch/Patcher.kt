@@ -2,14 +2,16 @@ package xyz.xenondevs.bytebase.patch
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
-import xyz.xenondevs.bytebase.ClassWrapperLoader
 import xyz.xenondevs.bytebase.INSTRUMENTATION
 import xyz.xenondevs.bytebase.jvm.ClassWrapper
+import xyz.xenondevs.bytebase.patch.logging.PatchLogger
+import xyz.xenondevs.bytebase.patch.logging.SimpleLogger
 import xyz.xenondevs.bytebase.patch.patcher.kotlin.PatchProcessor
 import kotlin.reflect.KClass
 
 class Patcher(
-    val postProcessors: List<PostProcessor>
+    val postProcessors: List<PostProcessor>,
+    @Volatile var logger: PatchLogger = SimpleLogger
 ) {
     
     constructor(vararg postProcessors: PostProcessor) : this(ObjectArrayList(postProcessors))
@@ -25,10 +27,13 @@ class Patcher(
     fun runPatches(): Map<String, ByteArray> {
         val newClasses = Object2ObjectOpenHashMap<String, ByteArray>()
         patchList.forEach { patch ->
+            logger.debug("")
+            logger.debugLine()
+            logger.debug("Running patch \"${patch.patchClass.simpleName}\" on \"${patch.target.name}\"")
             val newClass = ClassWrapper(patch.target.fileName).apply { patch.target.accept(this) }
             PatchProcessor(this, patch, newClass).runPatches()
-            ClassWrapperLoader(this.javaClass.classLoader).loadClass(newClass).methods
             newClasses[newClass.name] = newClass.assemble()
+            logger.debugLine()
         }
         return newClasses
     }

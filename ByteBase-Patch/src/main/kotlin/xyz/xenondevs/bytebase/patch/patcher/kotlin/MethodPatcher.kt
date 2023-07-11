@@ -30,12 +30,16 @@ import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.jvm.javaMethod
 
 internal class MethodPatcher(
+    val patcher: Patcher,
     val patch: Patcher.LoadedPatch,
     val newClass: ClassWrapper,
     val fieldCallRemapper: (MethodNode) -> Unit
 ) {
     
+    val logger get() = patcher.logger
+    
     fun patchMethods() {
+        logger.debug("Patching methods")
         patch.patchClass.declaredMemberFunctions.forEach { function ->
             val replaceAnnotation = function.findAnnotation<Replace>()
             if (replaceAnnotation != null) {
@@ -51,6 +55,8 @@ internal class MethodPatcher(
     }
     
     private fun replaceMethod(function: KFunction<*>, replaceAnnotation: Replace) {
+        logger.debugLine()
+        logger.debug("- Replacing method instructions of \"${function.name}\" with instructions of \"${replaceAnnotation.target}\"")
         val target = getAndRemoveTarget(replaceAnnotation.target)
         newClass.methods.removeIf { it.name == target.name && it.desc == target.desc }
         val patchedMethod = VirtualClassPath[function.javaMethod!!]
@@ -58,6 +64,8 @@ internal class MethodPatcher(
     }
     
     private fun injectMethod(function: KFunction<*>, inject: Inject) {
+        logger.debugLine()
+        logger.debug("- Injecting instructions of \"${function.name}\" into \"${inject.target}\" at specified position")
         val target = getAndRemoveTarget(inject.target)
         val at = inject.at
         val instructions = target.instructions.copy()
@@ -110,6 +118,7 @@ internal class MethodPatcher(
     }
     
     private fun searchForMatch(target: String, at: At, insns: InsnList): Pair<Int, Int> {
+        logger.debug("--- Searching for match of \n---\"${target.trim().replace("\n", "\n---")}\"")
         val toMatch = at.value.trimIndent().split('\n').map { it.split(' ') }
         var matchIndex = 0
         val textifier = Textifier()

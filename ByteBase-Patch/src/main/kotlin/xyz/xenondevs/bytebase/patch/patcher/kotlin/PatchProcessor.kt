@@ -15,8 +15,10 @@ internal class PatchProcessor(
     val newClass: ClassWrapper
 ) {
     
+    val logger get() = patcher.logger
+    
     private val fieldRemapper = FieldRemapper(patcher, patch)
-    private val methodPatcher = MethodPatcher(patch, newClass) { fieldRemapper.remap(it) }
+    private val methodPatcher = MethodPatcher(patcher, patch, newClass) { fieldRemapper.remap(it) }
     
     fun runPatches() {
         fieldRemapper.generateMappings()
