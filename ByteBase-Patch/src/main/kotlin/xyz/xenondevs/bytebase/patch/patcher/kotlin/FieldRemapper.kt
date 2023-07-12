@@ -45,8 +45,6 @@ internal class FieldRemapper(
     
     val logger get() = patcher.logger
     
-    val baseHolder = AtomicReference<ClassWrapper>() // TODO - Still unsure if all static fields in a class(?) have the same base?
-    
     private val patchName = patch.patchWrapper.name;
     private val fieldGetRemaps = HashMap<String, () -> InsnList>()
     private val fieldSetRemaps = HashMap<String, () -> InsnList>()
@@ -87,23 +85,20 @@ internal class FieldRemapper(
         
         val isAccessible = patch.target.canAccess(fieldRef, access, true)
         
-        val (getter, cSetter) = getCorrectGetter(prop, fieldRef, access, isAccessible)
+        val getter = getCorrectGetter(fieldRef, access, isAccessible)
         
         val fieldKey = "$name.$desc"
         
         fieldGetRemaps[fieldKey] = getter
         prop.javaGetter?.let { m -> methodRemaps[m.name + Type.getMethodDescriptor(m)] = getter }
-        if (cSetter != null) {
-            fieldSetRemaps[fieldKey] = cSetter
-            (prop as KMutableProperty).setter.javaMethod?.let { m -> methodRemaps[m.name + Type.getMethodDescriptor(m)] = cSetter }
-        } else if (prop is KMutableProperty) {
-            val setter = getCorrectSetter(prop, fieldRef, access, isAccessible)
+        if (prop is KMutableProperty) {
+            val setter = getCorrectSetter(fieldRef, access, isAccessible)
             fieldSetRemaps[fieldKey] = setter
             prop.setter.javaMethod?.let { m -> methodRemaps[m.name + Type.getMethodDescriptor(m)] = setter }
         }
     }
     
-    private fun getCorrectGetter(property: KProperty<*>, ref: MemberReference, access: Access, isAccessible: Boolean): Pair<InsnListConstructor, InsnListConstructor?> {
+    private fun getCorrectGetter(ref: MemberReference, access: Access, isAccessible: Boolean): InsnListConstructor {
         logger.debug("-- Generating getter mappings")
         
         // Check whether the target class can access the field directly
@@ -112,30 +107,37 @@ internal class FieldRemapper(
             // The target class can access the field directly, so we can just use the field directly
             return {
                 insnListOf(FieldInsnNode(if (access.isStatic()) GETSTATIC else GETFIELD, ref.owner, ref.name, ref.desc))
-            } to null
+            }
         } else {
             // Can't access field, get field offset and use Unsafe
             val rtField = ref.resolveRuntimeField(access)
-            // If the field is static, we'll need the separate baseholder class to store the base object for the field somewhere
+            val fieldType = Type.getType(rtField.type)
+            val (uMethod, uDesc) = getUnsafeSignature(true, fieldType)
+            
+            logger.debug("-- Field isn't accessible from the target class. Using Unsafe to access the field ($uMethod$uDesc)")
             if (!access.isStatic()) {
-                val fieldType = Type.getType(rtField.type)
-                val (uMethod, uDesc) = getUnsafeSignature(true, fieldType)
-                logger.debug("-- Field isn't accessible from the target class. Using Unsafe to access the field ($uMethod$uDesc)")
                 val offset = UnsafeAccess.getFieldOffset(rtField)
                 return {
                     buildInsnList {
                         ldc(offset)
                         invokeStatic(UnsafeAccess::class.internalName, uMethod, uDesc)
                     }
-                } to null
+                }
             } else {
-                logger.debug("-- Field isn't accessible from the target class. Generating holder class to cache static base...")
-                return generateBaseHolder(property, ref, rtField, access)
+                val offset = UnsafeAccess.getStaticFieldOffset(rtField)
+                return {
+                    buildInsnList {
+                        pop()
+                        add(Type.getType(rtField.declaringClass).getLdcTypeInstruction())
+                        ldc(offset)
+                        invokeStatic(UnsafeAccess::class.internalName, uMethod, uDesc)
+                    }
+                }
             }
         }
     }
     
-    private fun getCorrectSetter(property: KMutableProperty<*>, ref: MemberReference, access: Access, isAccessible: Boolean): InsnListConstructor {
+    private fun getCorrectSetter(ref: MemberReference, access: Access, isAccessible: Boolean): InsnListConstructor {
         logger.debug("-- Generating setter mappings")
         // Check whether the target class can set the field directly
         if (isAccessible && !access.isFinal()) {
@@ -146,15 +148,24 @@ internal class FieldRemapper(
         } else {
             // Can't access field, get field offset and use Unsafe.
             val rtField = ref.resolveRuntimeField(access)
+            val fieldType = Type.getType(rtField.type)
+            val (uSetName, uSetDesc) = getUnsafeSignature(false, fieldType)
             
-            if (access.isStatic()) { // base holder can't exist yet since a setter would've been generated by getCorrectGetter
-                logger.debug("-- Field isn't accessible from the target class. Generating holder class to cache static base...")
-                return generateBaseHolder(property, ref, rtField, access).second!!
+            logger.debug("-- Field isn't accessible from the target class. Using Unsafe to access the field ($uSetName$uSetDesc)")
+            if (access.isStatic()) {
+                val offset = UnsafeAccess.getStaticFieldOffset(rtField)
+                return {
+                    buildInsnList {
+                        swap()
+                        pop()
+                        add(Type.getType(rtField.declaringClass).getLdcTypeInstruction())
+                        swap()
+                        ldc(offset)
+                        invokeStatic(UnsafeAccess::class.internalName, uSetName, uSetDesc)
+                    }
+                }
             } else {
-                val fieldType = Type.getType(rtField.type)
                 val offset = UnsafeAccess.getFieldOffset(rtField)
-                val (uSetName, uSetDesc) = getUnsafeSignature(false, fieldType)
-                logger.debug("-- Field isn't accessible from the target class. Using Unsafe to set the field's value ($uSetName$uSetDesc)")
                 return {
                     buildInsnList {
                         ldc(offset)
@@ -163,84 +174,6 @@ internal class FieldRemapper(
                 }
             }
         }
-    }
-    
-    private fun generateBaseHolder(
-        property: KProperty<*>,
-        ref: MemberReference,
-        rtField: Field,
-        access: Access
-    ): Pair<InsnListConstructor, InsnListConstructor?> {
-        val fieldType = Type.getType(rtField.type)
-        val (uMethod, uDesc) = getUnsafeSignature(true, fieldType)
-        val baseHolder = getOrCreateBaseHolder()
-        logger.debug("--- Generating base holder class for field \"" + ref.toString() + "\" Class name: \"" + baseHolder.name + "\"")
-        val field = FieldNode(ACC_PRIVATE or ACC_STATIC, "base_" + ref.name, "L$OBJECT_TYPE;", null, null)
-        baseHolder.fields.add(field)
-        val getterMethod = MethodNode(ACC_PUBLIC or ACC_STATIC, "getStatic_" + ref.name, "()${ref.desc}", null, null)
-        val offset = UnsafeAccess.getStaticFieldOffset(rtField)
-        
-        var setterInstructions: InsnListConstructor? = null
-        
-        val clinit = baseHolder.getOrCreateClassInit()
-        clinit.instructions.insert(buildInsnList {
-            addLabel()
-            ldc(Type.getObjectType(ref.owner))
-            ldc(ref.name)
-            add(Type.getType(ref.desc).getLdcTypeInstruction())
-            invokeStatic(if (access.isPublic()) UnsafeAccess::getField else UnsafeAccess::getDeclaredField)
-            invokeStatic(UnsafeAccess::getStaticBase)
-            putStatic(baseHolder.name, field.name, field.desc)
-        })
-        
-        getterMethod.instructions = buildInsnList {
-            addLabel()
-            getStatic(baseHolder.name, field.name, field.desc)
-            ldc(offset)
-            invokeStatic(UnsafeAccess::class.internalName, uMethod, uDesc)
-            
-            addLabel()
-            add(fieldType.getReturnInstruction())
-        }
-        baseHolder.methods.add(getterMethod)
-        
-        logger.debug("--- Created getter in base holder class using $uMethod$uDesc in \"${getterMethod.name}\"")
-        
-        if (property is KMutableProperty<*>) {
-            if (access.isFinal() && fieldType.sort !in Type.ARRAY..Type.OBJECT) {
-                logger.warn("You are making the final static field \"" + ref.toString() + "\" with the type \"" + fieldType.className + "\" mutable in the patch \"" + patch.patchClass.internalName + "\".")
-                logger.warn("Please note that javac will inline final static fields with primitive types. So even when changing this field's value, the field's uses in the original class will not be changed.")
-                logger.warn("If you want to change a constant in a method, you can use the \"@ReplaceConstant\" annotation instead (And maybe actually access the original field from there).")
-            }
-            
-            val setterMethod = MethodNode(ACC_PUBLIC or ACC_STATIC, "setStatic_" + ref.name, "(${ref.desc})V", null, null)
-            val (uSetName, uSetDesc) = getUnsafeSignature(false, fieldType)
-            setterMethod.instructions = buildInsnList {
-                addLabel()
-                getStatic(baseHolder.name, field.name, field.desc)
-                add(fieldType.getLoadInstruction(0))
-                ldc(offset)
-                invokeStatic(UnsafeAccess::class.internalName, uSetName, uSetDesc)
-                _return()
-            }
-            baseHolder.methods.add(setterMethod)
-            setterInstructions = {
-                buildInsnList {
-                    swap()
-                    pop()
-                    invokeStatic(baseHolder.name, setterMethod.name, setterMethod.desc)
-                }
-            }
-            
-            logger.debug("--- Created setter in base holder class using $uSetName$uSetDesc in \"${setterMethod.name}\"")
-        }
-        
-        return {
-            buildInsnList {
-                pop()
-                invokeStatic(baseHolder.name, getterMethod.name, getterMethod.desc)
-            }
-        } to setterInstructions
     }
     
     private fun getUnsafeSignature(isGet: Boolean, type: Type): Pair<String, String> { // name, desc
@@ -269,14 +202,6 @@ internal class FieldRemapper(
                 else -> "putObject" to "(Ljava/lang/Object;Ljava/lang/Object;J)V"
             }
         }
-    }
-    
-    private fun getOrCreateBaseHolder(): ClassWrapper {
-        this.baseHolder.get()?.let { return it }
-        
-        val baseHolder = ClassWrapper(patch.target.className + "$" + patchName + Random.nextInt(1337))
-        this.baseHolder.set(baseHolder)
-        return baseHolder
     }
     
     private fun MemberReference.resolveRuntimeField(access: Access): Field {
