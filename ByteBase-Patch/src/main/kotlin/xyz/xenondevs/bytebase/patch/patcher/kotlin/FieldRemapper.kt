@@ -141,7 +141,7 @@ internal class FieldRemapper(
         if (isAccessible && !access.isFinal()) {
             logger.debug("-- Field is accessible and not final. Using direct access.")
             return {
-                buildInsnList { FieldInsnNode(if (access.isStatic()) PUTSTATIC else PUTFIELD, ref.owner, ref.name, ref.desc) }
+                insnListOf(FieldInsnNode(if (access.isStatic()) PUTSTATIC else PUTFIELD, ref.owner, ref.name, ref.desc))
             }
         } else {
             // Can't access field, get field offset and use Unsafe.
