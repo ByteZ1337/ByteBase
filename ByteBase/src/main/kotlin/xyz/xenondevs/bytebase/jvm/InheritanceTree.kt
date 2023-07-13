@@ -12,7 +12,7 @@ class InheritanceTree(val wrapper: ClassWrapper) {
      */
     fun resolveFieldRef(name: String, desc: String): MemberReference? {
         val field = wrapper.getField(name, desc)
-        if (field != null) return MemberReference(wrapper.name, name, desc)
+        if (field != null) return MemberReference(wrapper.name, name, desc, MemberType.FIELD)
         
         val superClass = superClasses.firstOrNull { it.getField(name, desc) != null }
         if (superClass != null) return MemberReference(superClass.name, name, desc, MemberType.FIELD)
@@ -32,7 +32,7 @@ class InheritanceTree(val wrapper: ClassWrapper) {
      */
     fun resolveMethodRef(name: String, descriptor: String): MemberReference? {
         val method = wrapper.getMethod(name, descriptor)
-        if (method != null) return MemberReference(wrapper.name, name, descriptor)
+        if (method != null) return MemberReference(wrapper.name, name, descriptor, MemberType.FIELD)
         
         val superClass = superClasses.firstNotNullOfOrNull { it.getMethod(name, descriptor) }
         if (superClass != null) return MemberReference(superClass.name, name, descriptor, MemberType.METHOD)
