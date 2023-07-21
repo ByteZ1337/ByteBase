@@ -4,6 +4,7 @@ import org.objectweb.asm.Type
 import org.objectweb.asm.tree.AbstractInsnNode
 import xyz.xenondevs.bytebase.asm.buildInsnList
 import java.lang.reflect.Array
+import java.lang.reflect.Field
 import java.lang.reflect.GenericArrayType
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.WildcardType
@@ -22,6 +23,9 @@ val ReflectType.representedClass: Class<*>
 
 val KProperty<*>.desc
     get() = Type.getDescriptor(returnType.javaType.representedClass)!!
+
+val Field.desc
+    get() = Type.getDescriptor(type.representedClass)!!
 
 fun Type.getReturnInstruction(): AbstractInsnNode = buildInsnList {
     when (sort) {

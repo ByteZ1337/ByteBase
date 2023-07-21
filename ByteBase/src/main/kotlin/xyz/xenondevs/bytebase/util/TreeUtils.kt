@@ -29,14 +29,24 @@ fun AnnotationNode.toMap(): Map<String, Any?> {
 }
 
 /**
- * Gets the internal name of the class (e.g. ``java/lang/Object``)
+ * Gets the internal name of the class (e.g. `java/lang/Object`)
  */
 val Class<*>.internalName get() = name.replace('.', '/')
 
 /**
- * Gets the internal name of the class (e.g. ``kotlin/Any``)
+ * Gets the descriptor of the class (e.g. `Ljava/lang/Object;`)
+ */
+val Class<*>.desc get() = "L${this.internalName};"
+
+/**
+ * Gets the internal name of the class (e.g. `kotlin/Any`)
  */
 val KClass<*>.internalName get() = java.internalName
+
+/**
+ * Gets the descriptor of the class (e.g. `Lkotlin/Any;`)
+ */
+val KClass<*>.desc get() = "L${this.internalName};"
 
 /**
  * Checks if the class has any annotations
