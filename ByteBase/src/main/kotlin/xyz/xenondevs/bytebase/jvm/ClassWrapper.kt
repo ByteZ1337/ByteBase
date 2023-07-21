@@ -176,6 +176,11 @@ class ClassWrapper : ClassNode {
     
     //</editor-fold>
     
+    /**
+     * Checks if this class can access the given member.
+     * Please note that this is not 100% accurate, as any module definitions are ignored. This function also only
+     * checks the field/method access, not if the class is accessible. Use [canAccessClass] for that.
+     */
     fun canAccess(ref: MemberReference, access: Access, assertInSuper: Boolean): Boolean {
         if (ref.owner == name)
             return true
@@ -192,6 +197,21 @@ class ClassWrapper : ClassNode {
         
         // package private
         return ref.owner.substringBeforeLast('/') == name.substringBeforeLast('/')
+    }
+    
+    /**
+     * Checks if this class can access the given class.
+     * Please note that this is not 100% accurate, as any module definitions are ignored.
+     */
+    fun canAccessClass(clazz: ClassWrapper): Boolean {
+        if (clazz.name == name)
+            return true
+        
+        if (clazz.accessWrapper.isPublic())
+            return true
+        
+        // package private
+        return clazz.name.substringBeforeLast('/') == name.substringBeforeLast('/')
     }
     
     fun isAssignableFrom(clazz: ClassWrapper): Boolean {

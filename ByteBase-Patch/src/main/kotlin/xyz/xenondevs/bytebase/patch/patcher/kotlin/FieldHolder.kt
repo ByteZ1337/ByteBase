@@ -1,10 +1,12 @@
+@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
+
 package xyz.xenondevs.bytebase.patch.patcher.kotlin
 
 import it.unimi.dsi.fastutil.ints.Int2LongMap
 import it.unimi.dsi.fastutil.ints.Int2LongOpenHashMap
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
-import sun.misc.Unsafe
+import jdk.internal.misc.Unsafe
 import xyz.xenondevs.bytebase.patch.util.weak.IntWeakIdentityHashMap
 
 class FieldHolder {

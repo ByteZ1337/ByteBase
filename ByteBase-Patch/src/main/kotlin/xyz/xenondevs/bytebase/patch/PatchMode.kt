@@ -2,7 +2,7 @@ package xyz.xenondevs.bytebase.patch
 
 import xyz.xenondevs.bytebase.patch.PatchMode.*
 import xyz.xenondevs.bytebase.patch.patcher.kotlin.FieldHolder
-import xyz.xenondevs.bytebase.patch.util.RuntimeClasspath
+import xyz.xenondevs.bytebase.patch.util.RuntimeClassPath
 import xyz.xenondevs.bytebase.patch.util.UnsafeAccess
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
@@ -74,7 +74,7 @@ enum class PatchMode {
     
     fun getActualMode(name: String): PatchMode {
         if (this != AUTOMATIC) return this
-        return if (RuntimeClasspath.isClassLoaded(name)) INSTRUMENTATION else CLASSLOADER
+        return if (RuntimeClassPath.isClassLoaded(name)) INSTRUMENTATION else CLASSLOADER
     }
     
 }

@@ -2,7 +2,7 @@ package xyz.xenondevs.bytebase.patch.util
 
 import xyz.xenondevs.bytebase.INSTRUMENTATION
 
-internal object RuntimeClasspath {
+internal object RuntimeClassPath {
     
     var loadedClasses = getRuntimeClasses()
     

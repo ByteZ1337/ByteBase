@@ -134,6 +134,7 @@ internal class MethodPatcher(
             for (i in insnText.indices) {
                 if (i >= toMatchArray.size) return false
                 if (toMatchArray[i] == "*") continue
+                if (toMatchArray[i] == "**") return true
                 if (toMatchArray[i] != insnText[i]) return false
             }
             return true

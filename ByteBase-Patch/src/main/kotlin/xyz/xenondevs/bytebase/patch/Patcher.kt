@@ -2,6 +2,7 @@ package xyz.xenondevs.bytebase.patch
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import xyz.xenondevs.bytebase.INSTRUMENTATION
 import xyz.xenondevs.bytebase.jvm.ClassWrapper
 import xyz.xenondevs.bytebase.patch.logging.PatchLogger
@@ -21,6 +22,8 @@ class Patcher(
     private val instrumentation by lazy { INSTRUMENTATION }
     
     private val patchList = PatchList()
+    
+    internal val additionalClassLoaderDefs = ObjectOpenHashSet<String>()
     
     fun addPatch(patch: KClass<*>) = patchList.addPatch(patch)
     
@@ -42,8 +45,13 @@ class Patcher(
         val target: ClassWrapper,
         val priority: UInt,
         val patchClass: KClass<*>,
-        val patchWrapper: ClassWrapper
+        val patchWrapper: ClassWrapper,
+        val patchMode: PatchMode
     ) : Comparable<LoadedPatch> {
+        
+        init {
+            require(patchMode != PatchMode.AUTOMATIC) { "PatchMode.AUTOMATIC is not allowed for LoadedPatch! This should have been resolved by now!" }
+        }
         
         override fun compareTo(other: LoadedPatch): Int {
             return priority.compareTo(other.priority)
