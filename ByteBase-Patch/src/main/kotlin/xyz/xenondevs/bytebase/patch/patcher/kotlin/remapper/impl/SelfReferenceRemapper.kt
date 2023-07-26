@@ -13,7 +13,7 @@ internal class SelfReferenceRemapper(
     patcher: Patcher,
     patch: LoadedPatch,
     mappings: MappingsContainer,
-    newDefinitions: MutableSet<ClassWrapper>
+    newDefinitions: MutableMap<String, ClassWrapper>
 ) : PropertyRemapper<FieldAccessor>(patcher, patch, mappings, newDefinitions) {
     
     override fun <T> processProperty(annotation: FieldAccessor, prop: KProperty<T>) {

@@ -33,9 +33,8 @@ class Patcher(
             logger.debug("")
             logger.debugLine()
             logger.debug("Running patch \"${patch.patchClass.simpleName}\" on \"${patch.target.name}\"")
-            val newClass = ClassWrapper(patch.target.fileName).apply { patch.target.accept(this) }
-            PatchProcessor(this, patch, newClass).runPatches()
-            newClasses[newClass.name] = newClass.assemble()
+            PatchProcessor(this, patch).runPatches()
+            newClasses[patch.target.name] = patch.target.assemble()
             logger.debugLine()
         }
         return newClasses

@@ -1,5 +1,6 @@
 package xyz.xenondevs.bytebase.util
 
+import org.objectweb.asm.Handle
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.AbstractInsnNode
@@ -303,4 +304,16 @@ fun InsnList.disassemble(): String {
     val writer = StringWriter()
     textifier.print(PrintWriter(writer))
     return writer.toString()
+}
+
+object InsnUtils {
+    
+    val LAMBDA_METAFACTORY_HANDLE = Handle(
+        Opcodes.H_INVOKESTATIC,
+        "java/lang/invoke/LambdaMetafactory",
+        "metafactory",
+        "(Ljava/lang/invoke/MethodHandles\$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;",
+        false
+    )
+    
 }

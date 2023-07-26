@@ -17,6 +17,8 @@ internal object StringUtils {
         return substring(startIndex, endIndex)
     }
     
+    fun String.capitalize() = replaceFirstChar { it.uppercaseChar() }
+    
 }
 
 class SingleStringWriter : Writer() {

@@ -1,7 +1,6 @@
 package xyz.xenondevs.bytebase.patch.patcher.kotlin
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import org.objectweb.asm.tree.FieldInsnNode
 import org.objectweb.asm.tree.MethodInsnNode
 import org.objectweb.asm.tree.MethodNode
@@ -12,6 +11,7 @@ import xyz.xenondevs.bytebase.patch.patcher.kotlin.remapper.NonAnnotatedProperty
 import xyz.xenondevs.bytebase.patch.patcher.kotlin.remapper.PropertyRemapper
 import xyz.xenondevs.bytebase.patch.patcher.kotlin.remapper.Remapper
 import xyz.xenondevs.bytebase.patch.patcher.kotlin.remapper.RemapperType
+import java.io.File
 import kotlin.reflect.KClass
 import kotlin.reflect.full.declaredMemberProperties
 
@@ -24,7 +24,7 @@ internal class FieldRemapper(
     
     private val remappers = Object2ObjectOpenHashMap<KClass<out Annotation>?, Remapper<*>>()
     private val mappings = MappingsContainer()
-    private val newDefs = ObjectOpenHashSet<ClassWrapper>()
+    private val newDefs = Object2ObjectOpenHashMap<String, ClassWrapper>()
     
     @Suppress("UNCHECKED_CAST")
     fun generateMappings() {
@@ -39,6 +39,8 @@ internal class FieldRemapper(
             else if (remapper is PropertyRemapper<*>)
                 (remapper as PropertyRemapper<Annotation>).processProperty(annotation!!, prop)
         }
+        remappers.values.forEach { it.finish() }
+        newDefs.forEach { (_, clazz) -> File(clazz.className + ".class").writeBytes(clazz.assemble()) }
     }
     
     fun remap(method: MethodNode) {

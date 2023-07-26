@@ -27,7 +27,7 @@ val KProperty<*>.desc
 val Field.desc
     get() = Type.getDescriptor(type.representedClass)!!
 
-fun Type.getReturnInstruction(): AbstractInsnNode = buildInsnList {
+fun Type.returnInsn(): AbstractInsnNode = buildInsnList {
     when (sort) {
         Type.VOID -> _return()
         Type.BOOLEAN, Type.CHAR, Type.BYTE, Type.SHORT, Type.INT -> ireturn()
@@ -39,7 +39,7 @@ fun Type.getReturnInstruction(): AbstractInsnNode = buildInsnList {
     }
 }.first
 
-fun Type.getLoadInstruction(index: Int): AbstractInsnNode = buildInsnList {
+fun Type.loadInsn(index: Int): AbstractInsnNode = buildInsnList {
     when (sort) {
         Type.BOOLEAN, Type.CHAR, Type.BYTE, Type.SHORT, Type.INT -> iLoad(index)
         Type.FLOAT -> fLoad(index)
@@ -50,7 +50,7 @@ fun Type.getLoadInstruction(index: Int): AbstractInsnNode = buildInsnList {
     }
 }.first
 
-fun Type.getStoreInstruction(index: Int): AbstractInsnNode = buildInsnList {
+fun Type.storeInsn(index: Int): AbstractInsnNode = buildInsnList {
     when (sort) {
         Type.BOOLEAN, Type.CHAR, Type.BYTE, Type.SHORT, Type.INT -> iStore(index)
         Type.FLOAT -> fStore(index)
@@ -61,7 +61,7 @@ fun Type.getStoreInstruction(index: Int): AbstractInsnNode = buildInsnList {
     }
 }.first
 
-fun Type.getLdcTypeInstruction(): AbstractInsnNode = buildInsnList {
+fun Type.ldcInsn(): AbstractInsnNode = buildInsnList {
     when (sort) {
         Type.BOOLEAN -> getStatic("java/lang/Boolean", "TYPE", "Ljava/lang/Class;")
         Type.CHAR -> getStatic("java/lang/Character", "TYPE", "Ljava/lang/Class;")
@@ -71,7 +71,68 @@ fun Type.getLdcTypeInstruction(): AbstractInsnNode = buildInsnList {
         Type.FLOAT -> getStatic("java/lang/Float", "TYPE", "Ljava/lang/Class;")
         Type.LONG -> getStatic("java/lang/Long", "TYPE", "Ljava/lang/Class;")
         Type.DOUBLE -> getStatic("java/lang/Double", "TYPE", "Ljava/lang/Class;")
-        Type.ARRAY, Type.OBJECT -> ldc(this@getLdcTypeInstruction)
+        Type.ARRAY, Type.OBJECT -> ldc(this@ldcInsn)
         else -> throw IllegalStateException("Unknown type $this")
     }
 }.first
+
+fun Type.newArrayInsn(): AbstractInsnNode = buildInsnList {
+    when (sort) {
+        Type.BOOLEAN -> newBooleanArray()
+        Type.CHAR -> newCharArray()
+        Type.BYTE -> newByteArray()
+        Type.SHORT -> newShortArray()
+        Type.INT -> newIntArray()
+        Type.FLOAT -> newFloatArray()
+        Type.LONG -> newLongArray()
+        Type.DOUBLE -> newDoubleArray()
+        Type.ARRAY -> aNewArray(this@newArrayInsn.descriptor)
+        Type.OBJECT -> aNewArray(this@newArrayInsn.internalName)
+        else -> throw IllegalStateException("Unknown type $this")
+    }
+}.first
+
+fun Type.arrayLoadInsn(): AbstractInsnNode = buildInsnList {
+    when (sort) {
+        Type.BOOLEAN, Type.CHAR, Type.BYTE, Type.SHORT, Type.INT -> iaload()
+        Type.FLOAT -> faload()
+        Type.LONG -> laload()
+        Type.DOUBLE -> daload()
+        Type.ARRAY, Type.OBJECT -> aaload()
+        else -> throw IllegalStateException("Unknown type $this")
+    }
+}.first
+
+fun Type.arrayStoreInsn(): AbstractInsnNode = buildInsnList {
+    when (sort) {
+        Type.BOOLEAN, Type.CHAR, Type.BYTE, Type.SHORT, Type.INT -> iastore()
+        Type.FLOAT -> fastore()
+        Type.LONG -> lastore()
+        Type.DOUBLE -> dastore()
+        Type.ARRAY, Type.OBJECT -> aastore()
+        else -> throw IllegalStateException("Unknown type $this")
+    }
+}.first
+
+object TypeUtils {
+    
+    val OBJECT_TYPE: Type = Type.getType("Ljava/lang/Object;")
+    val OBJECT_ARRAY_TYPE: Type = Type.getType("[Ljava/lang/Object;")
+    
+    fun getTypeForSort(sort: Int, arrayToObject: Boolean = false): Type =
+        when (sort) {
+            Type.VOID -> Type.VOID_TYPE
+            Type.BOOLEAN -> Type.BOOLEAN_TYPE
+            Type.CHAR -> Type.CHAR_TYPE
+            Type.BYTE -> Type.BYTE_TYPE
+            Type.SHORT -> Type.SHORT_TYPE
+            Type.INT -> Type.INT_TYPE
+            Type.FLOAT -> Type.FLOAT_TYPE
+            Type.LONG -> Type.LONG_TYPE
+            Type.DOUBLE -> Type.DOUBLE_TYPE
+            Type.ARRAY -> if (arrayToObject) OBJECT_TYPE else OBJECT_ARRAY_TYPE
+            Type.OBJECT -> OBJECT_TYPE
+            else -> throw IllegalArgumentException("Unknown sort $sort")
+        }
+    
+}

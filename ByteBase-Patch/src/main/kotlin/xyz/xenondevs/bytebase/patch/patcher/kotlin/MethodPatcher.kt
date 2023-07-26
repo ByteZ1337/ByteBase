@@ -10,7 +10,6 @@ import org.objectweb.asm.tree.MethodNode
 import org.objectweb.asm.util.Textifier
 import org.objectweb.asm.util.TraceMethodVisitor
 import xyz.xenondevs.bytebase.asm.buildInsnList
-import xyz.xenondevs.bytebase.jvm.ClassWrapper
 import xyz.xenondevs.bytebase.jvm.VirtualClassPath
 import xyz.xenondevs.bytebase.patch.Patcher
 import xyz.xenondevs.bytebase.patch.annotation.Inject
@@ -32,7 +31,6 @@ import kotlin.reflect.jvm.javaMethod
 internal class MethodPatcher(
     val patcher: Patcher,
     val patch: Patcher.LoadedPatch,
-    val newClass: ClassWrapper,
     val fieldCallRemapper: (MethodNode) -> Unit
 ) {
     
@@ -58,9 +56,10 @@ internal class MethodPatcher(
         logger.debugLine()
         logger.debug("- Replacing method instructions of \"${function.name}\" with instructions of \"${replaceAnnotation.target}\"")
         val target = getAndRemoveTarget(replaceAnnotation.target)
-        newClass.methods.removeIf { it.name == target.name && it.desc == target.desc }
         val patchedMethod = VirtualClassPath[function.javaMethod!!]
-        fieldCallRemapper(patchedMethod)
+        val newMethod = MethodNode(target.access, target.name, target.desc, null, null).apply { this.instructions = patchedMethod.instructions.copy() }
+        fieldCallRemapper(newMethod)
+        patch.target.methods.add(newMethod)
     }
     
     private fun injectMethod(function: KFunction<*>, inject: Inject) {
@@ -98,14 +97,14 @@ internal class MethodPatcher(
         
         // Add the patched method to the class
         val newMethod = MethodNode(target.access, target.name, target.desc, null, null).apply { this.instructions = instructions }
-        newClass.methods.add(newMethod)
+        patch.target.methods.add(newMethod)
         fieldCallRemapper(newMethod)
     }
     
     private fun getAndRemoveTarget(targetMethod: String): MethodNode {
         val target = patch.target.getMethod(targetMethod, includesDesc = targetMethod.contains('('))
             ?: throw IllegalStateException("Target method $targetMethod not found in ${patch.target.name}")
-        newClass.methods.removeIf { it.name == target.name && it.desc == target.desc }
+        patch.target.methods.removeIf { it.name == target.name && it.desc == target.desc }
         return target
     }
     

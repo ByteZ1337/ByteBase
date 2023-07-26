@@ -48,6 +48,28 @@ internal data class MappingsContainer(
             { list, insn -> list.replace(insn, setInsns.copy()) }
         )
     
+    fun addFieldRemap(prop: KProperty<*>, remap: InstructionRemap) {
+        prop.javaField?.let { fieldGetRemaps[it.name + "." + it.desc] = remap }
+    }
+    
+    fun addFieldRemap(prop: KProperty<*>, insns: InsnList) =
+        addFieldRemap(prop) { list, insn -> list.replace(insn, insns.copy()) }
+    
+    fun addFieldRemap(prop: KMutableProperty<*>, getRemap: InstructionRemap, setRemap: InstructionRemap) {
+        prop.javaField?.let {
+            val key = it.name + "." + it.desc
+            fieldGetRemaps[key] = getRemap
+            fieldSetRemaps[key] = setRemap
+        }
+    }
+    
+    fun addFieldRemap(prop: KMutableProperty<*>, getInsns: InsnList, setInsns: InsnList) =
+        addFieldRemap(
+            prop,
+            { list, insn -> list.replace(insn, getInsns.copy()) },
+            { list, insn -> list.replace(insn, setInsns.copy()) }
+        )
+    
     operator fun contains(insn: MethodInsnNode): Boolean {
         val key = insn.name + insn.desc
         return key in methodRemaps

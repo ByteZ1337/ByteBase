@@ -12,6 +12,7 @@ import xyz.xenondevs.bytebase.jvm.ClassWrapper
 import xyz.xenondevs.bytebase.jvm.MemberReference
 import xyz.xenondevs.bytebase.patch.PatchMode
 import xyz.xenondevs.bytebase.patch.Patcher
+import xyz.xenondevs.bytebase.patch.Patcher.LoadedPatch
 import xyz.xenondevs.bytebase.patch.annotation.FieldAccessor
 import xyz.xenondevs.bytebase.patch.patcher.kotlin.remapper.MappingsContainer
 import xyz.xenondevs.bytebase.patch.patcher.kotlin.remapper.PropertyRemapper
@@ -20,8 +21,8 @@ import xyz.xenondevs.bytebase.patch.util.StringUtils.possessive
 import xyz.xenondevs.bytebase.patch.util.UnsafeAccess
 import xyz.xenondevs.bytebase.util.accessWrapper
 import xyz.xenondevs.bytebase.util.desc
-import xyz.xenondevs.bytebase.util.getLdcTypeInstruction
 import xyz.xenondevs.bytebase.util.internalName
+import xyz.xenondevs.bytebase.util.ldcInsn
 import xyz.xenondevs.bytebase.util.representedClass
 import java.lang.reflect.Field
 import kotlin.reflect.KMutableProperty
@@ -30,9 +31,9 @@ import kotlin.reflect.jvm.javaType
 
 internal class FieldAccessorRemapper(
     patcher: Patcher,
-    patch: Patcher.LoadedPatch,
+    patch: LoadedPatch,
     mappings: MappingsContainer,
-    newDefinitions: MutableSet<ClassWrapper>
+    newDefinitions: MutableMap<String, ClassWrapper>
 ) : PropertyRemapper<FieldAccessor>(patcher, patch, mappings, newDefinitions) {
     
     val logger get() = patcher.logger
@@ -55,7 +56,7 @@ internal class FieldAccessorRemapper(
         val access = fieldRef.resolveField().accessWrapper
         
         // Check if the field is accessible and overwrite the access if allowed
-        val (isAccessible, isMutable) = tryFixAccess(fieldRef, access, annotation, prop)
+        val (isAccessible, isMutable) = tryFixAccess(fieldRef, access, prop)
         
         // Get the getter and setter instructions and add them to the mappings
         val getterInsns = getCorrectGetter(fieldRef, fieldRef.resolveField().accessWrapper, isAccessible)
@@ -70,7 +71,6 @@ internal class FieldAccessorRemapper(
     private fun tryFixAccess(
         ref: MemberReference,
         access: ReferencingAccess,
-        annotation: FieldAccessor,
         prop: KProperty<*>
     ): Pair<Boolean, Boolean> { // isAccessible, isMutable
         logger.debug("-- Checking access of field \"${ref.name}\"")
@@ -154,7 +154,7 @@ internal class FieldAccessorRemapper(
                 val offset = UnsafeAccess.getStaticFieldOffset(rtField)
                 return buildInsnList {
                     pop()
-                    add(Type.getType(rtField.declaringClass).getLdcTypeInstruction())
+                    add(Type.getType(rtField.declaringClass).ldcInsn())
                     ldc(offset)
                     invokeStatic(UnsafeAccess::class.internalName, uMethod, uDesc)
                 }
@@ -182,7 +182,7 @@ internal class FieldAccessorRemapper(
                 return buildInsnList {
                     swap()
                     pop()
-                    add(Type.getType(rtField.declaringClass).getLdcTypeInstruction())
+                    add(Type.getType(rtField.declaringClass).ldcInsn())
                     swap()
                     ldc(offset)
                     invokeStatic(UnsafeAccess::class.internalName, uSetName, uSetDesc)

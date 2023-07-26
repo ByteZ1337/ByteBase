@@ -15,15 +15,16 @@ internal class PatchList : Iterable<Patcher.LoadedPatch> {
     private val patches = TreeSet<Patcher.LoadedPatch>()
     
     fun addPatch(patch: KClass<*>) {
+        if (checkForDirectPatch(patch))
+            return
+        
         val patchAnnotation = patch.findAnnotations(Patch::class).firstOrNull()
         if (patchAnnotation != null) {
             addDefaultPatch(patch, patchAnnotation)
             return
         }
         
-        if (!checkForDirectPatch(patch))
-            throw IllegalArgumentException("Patch class $patch does not have a @Patch or @DirectPatch annotation!")
-        
+        throw IllegalArgumentException("Patch class $patch does not have a @Patch or @DirectPatch annotation!")
     }
     
     @Suppress("DuplicatedCode")
