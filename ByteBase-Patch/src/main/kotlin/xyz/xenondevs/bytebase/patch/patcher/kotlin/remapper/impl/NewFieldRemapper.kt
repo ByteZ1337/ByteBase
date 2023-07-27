@@ -214,7 +214,7 @@ internal class NewFieldRemapper(
         
         private fun addMap(type: Type, isSingleMap: Boolean): Pair<String, String> {
             val typeName = type.className.substringAfterLast('.').capitalize()
-            val mapName = if (isSingleMap) "single${typeName}" else "multi${typeName}"
+            val mapName = if (isSingleMap) "SINGLE_${typeName.uppercase()}" else "MULTI_${typeName.uppercase()}"
             val mapType = if (isSingleMap) "Lit/unimi/dsi/fastutil/ints/Int2${typeName}OpenHashMap;" else "L" + Int2ObjectOpenHashMap::class.internalName + ";"
             
             if (clazz.getField(mapName, mapType) != null)
@@ -252,8 +252,14 @@ internal class NewFieldRemapper(
         
         private fun addMultiGetMethod(mapName: String, mapDesc: String, valueType: Type): Pair<String, String> {
             val valueDesc = valueType.descriptor
-            val method = MethodNode(ACC_PUBLIC or ACC_STATIC, "getMulti" + valueType.className.substringAfterLast('.').capitalize(), "(III)$valueDesc") {
-                getOrAddMap(mapName, mapDesc, valueType) {
+            val name = "getMulti" + valueType.className.substringAfterLast('.').capitalize()
+            val desc = "(III)$valueDesc"
+            
+            if (clazz.getMethod(name, desc) != null)
+                return name to desc
+            
+            val method = MethodNode(ACC_PUBLIC or ACC_STATIC, name, desc) {
+                getOrAddArray(mapName, mapDesc, valueType) {
                     aLoad(4)
                     iLoad(1)
                     add(valueType.arrayLoadInsn())
@@ -266,8 +272,14 @@ internal class NewFieldRemapper(
         
         private fun addMultiSetMethod(mapName: String, mapDesc: String, valueType: Type): Pair<String, String> {
             val valueDesc = valueType.descriptor
-            val method = MethodNode(ACC_PUBLIC or ACC_STATIC, "setMulti" + valueType.className.substringAfterLast('.').capitalize(), "(III$valueDesc)V") {
-                getOrAddMap(mapName, mapDesc, valueType) {
+            val name = "setMulti" + valueType.className.substringAfterLast('.').capitalize()
+            val desc = "(III$valueDesc)V"
+            
+            if (clazz.getMethod(name, desc) != null)
+                return name to desc
+            
+            val method = MethodNode(ACC_PUBLIC or ACC_STATIC, name, desc) {
+                getOrAddArray(mapName, mapDesc, valueType) {
                     aLoad(4)
                     iLoad(1)
                     add(valueType.loadInsn(3))
@@ -279,7 +291,7 @@ internal class NewFieldRemapper(
             return method.name to method.desc
         }
         
-        private fun InsnBuilder.getOrAddMap(mapName: String, mapDesc: String, valueType: Type, then: InsnBuilder.() -> Unit) {
+        private fun InsnBuilder.getOrAddArray(mapName: String, mapDesc: String, valueType: Type, then: InsnBuilder.() -> Unit) {
             val valueDesc = valueType.descriptor
             val addLabel = LabelNode()
             val getLabel = LabelNode()
@@ -301,7 +313,7 @@ internal class NewFieldRemapper(
             add(valueType.newArrayInsn())
             aStore(4)
             getStatic(clazz.name, mapName, mapDesc)
-            iLoad(1)
+            iLoad(0)
             aLoad(4)
             invokeVirtual(mapDesc.between('L', ';'), "put", "(ILjava/lang/Object;)Ljava/lang/Object;", false)
             pop()
