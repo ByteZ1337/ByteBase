@@ -34,13 +34,15 @@ import xyz.xenondevs.bytebase.util.internalName
 import xyz.xenondevs.bytebase.util.loadInsn
 import xyz.xenondevs.bytebase.util.newArrayInsn
 import xyz.xenondevs.bytebase.util.returnInsn
-import java.util.concurrent.atomic.AtomicInteger
 import kotlin.random.Random
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KProperty
 
 private const val FIELD_HOLDER_NAME = "ByteBaseFieldHolder"
 
+/**
+ * TODO: Also insert default field values
+ */
 internal class NewFieldRemapper(
     patcher: Patcher,
     patch: LoadedPatch,
@@ -60,8 +62,6 @@ internal class NewFieldRemapper(
             }
         }
     }
-    
-    private val fieldCounts by lazy { Int2ObjectOpenHashMap<AtomicInteger>() }
     
     override fun <T> processProperty(prop: KProperty<T>) {
         if (patch.patchMode == PatchMode.CLASSLOADER) {
