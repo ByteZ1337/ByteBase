@@ -1,11 +1,11 @@
 package xyz.xenondevs.bytebase.patch.patcher.kotlin.remapper
 
+import kotlinx.metadata.KmFunction
+import kotlinx.metadata.KmProperty
 import org.objectweb.asm.tree.InsnList
 import xyz.xenondevs.bytebase.jvm.ClassWrapper
 import xyz.xenondevs.bytebase.patch.Patcher
 import xyz.xenondevs.bytebase.patch.Patcher.LoadedPatch
-import kotlin.reflect.KFunction
-import kotlin.reflect.KProperty
 
 internal typealias InsnListConstructor = () -> InsnList
 
@@ -31,7 +31,7 @@ internal abstract class PropertyRemapper<A : Annotation>(
     newDefinitions: MutableMap<String, ClassWrapper>
 ) : Remapper<A>(patcher, patch, mappings, newDefinitions) {
     
-    abstract fun <T> processProperty(annotation: A, prop: KProperty<T>)
+    abstract fun processProperty(annotation: A, prop: KmProperty)
     
 }
 
@@ -42,7 +42,7 @@ internal abstract class NonAnnotatedPropertyRemapper(
     newDefinitions: MutableMap<String, ClassWrapper>
 ) : Remapper<Nothing>(patcher, patch, mappings, newDefinitions) {
     
-    abstract fun <T> processProperty(prop: KProperty<T>)
+    abstract fun processProperty(prop: KmProperty)
     
 }
 
@@ -53,7 +53,7 @@ internal abstract class FunctionRemapper<A : Annotation>(
     newDefinitions: MutableMap<String, ClassWrapper>
 ) : Remapper<A>(patcher, patch, mappings, newDefinitions) {
     
-    abstract fun <R> processFunction(annotation: A, func: KFunction<R>)
+    abstract fun processFunction(annotation: A, func: KmFunction)
     
 }
 
@@ -64,6 +64,6 @@ internal abstract class NonAnnotatedFunctionRemapper(
     newDefinitions: MutableMap<String, ClassWrapper>
 ) : Remapper<Nothing>(patcher, patch, mappings, newDefinitions) {
     
-    abstract fun <R> processFunction(func: KFunction<R>)
+    abstract fun processFunction(func: KmFunction)
     
 }

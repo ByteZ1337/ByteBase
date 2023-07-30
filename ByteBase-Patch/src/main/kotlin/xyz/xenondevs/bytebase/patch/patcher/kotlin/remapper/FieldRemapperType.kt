@@ -12,7 +12,7 @@ import kotlin.reflect.KClass
 
 internal typealias RemapperConstructor = (Patcher, LoadedPatch, MappingsContainer, MutableMap<String, ClassWrapper>) -> Remapper<*>
 
-internal enum class RemapperType(val annotation: KClass<out Annotation>?, val constructor: RemapperConstructor) {
+internal enum class FieldRemapperType(val annotation: KClass<out Annotation>?, val constructor: RemapperConstructor) {
     FIELD_ACCESSOR(FieldAccessor::class, ::FieldAccessorRemapper),
     SELF_REFERENCE(SelfReference::class, ::SelfReferenceRemapper),
     NEW_FIELD(null, ::NewFieldRemapper);
@@ -32,4 +32,22 @@ internal enum class RemapperType(val annotation: KClass<out Annotation>?, val co
         
     }
     
+}
+
+internal enum class FunctionRemapperType(val annotation: KClass<out Annotation>?, val constructor: RemapperConstructor) {
+//    NEW_METHOD(null, ::VirtualMethodRemapper);
+    ;
+    
+    companion object {
+        fun getRemapper(
+            annotation: Annotation?,
+            patcher: Patcher,
+            patch: LoadedPatch,
+            mappings: MappingsContainer,
+            newDefinitions: MutableMap<String, ClassWrapper>
+        ): Remapper<*>? =
+            entries
+                .firstOrNull { (it.annotation?.isInstance(annotation)) ?: (annotation == null) }
+                ?.constructor?.invoke(patcher, patch, mappings, newDefinitions)
+    }
 }

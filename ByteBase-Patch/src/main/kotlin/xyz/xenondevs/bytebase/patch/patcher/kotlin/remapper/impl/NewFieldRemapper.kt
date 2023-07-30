@@ -3,6 +3,8 @@ package xyz.xenondevs.bytebase.patch.patcher.kotlin.remapper.impl
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.Object2IntMap
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
+import kotlinx.metadata.KmProperty
+import kotlinx.metadata.isVar
 import org.objectweb.asm.Handle
 import org.objectweb.asm.Opcodes.*
 import org.objectweb.asm.Type
@@ -22,6 +24,7 @@ import xyz.xenondevs.bytebase.patch.patcher.kotlin.remapper.NonAnnotatedProperty
 import xyz.xenondevs.bytebase.patch.util.StringUtils.between
 import xyz.xenondevs.bytebase.patch.util.StringUtils.capitalize
 import xyz.xenondevs.bytebase.patch.util.StringUtils.possessive
+import xyz.xenondevs.bytebase.patch.util.desc
 import xyz.xenondevs.bytebase.patch.util.weak.IntWeakIdentityHashMap
 import xyz.xenondevs.bytebase.util.InsnUtils
 import xyz.xenondevs.bytebase.util.MethodNode
@@ -29,14 +32,11 @@ import xyz.xenondevs.bytebase.util.TypeUtils
 import xyz.xenondevs.bytebase.util.accessWrapper
 import xyz.xenondevs.bytebase.util.arrayLoadInsn
 import xyz.xenondevs.bytebase.util.arrayStoreInsn
-import xyz.xenondevs.bytebase.util.desc
 import xyz.xenondevs.bytebase.util.internalName
 import xyz.xenondevs.bytebase.util.loadInsn
 import xyz.xenondevs.bytebase.util.newArrayInsn
 import xyz.xenondevs.bytebase.util.returnInsn
 import kotlin.random.Random
-import kotlin.reflect.KMutableProperty
-import kotlin.reflect.KProperty
 
 private const val FIELD_HOLDER_NAME = "ByteBaseFieldHolder"
 
@@ -63,7 +63,7 @@ internal class NewFieldRemapper(
         }
     }
     
-    override fun <T> processProperty(prop: KProperty<T>) {
+    override fun processProperty(prop: KmProperty) {
         if (patch.patchMode == PatchMode.CLASSLOADER) {
             addField(prop)
         } else {
@@ -77,7 +77,7 @@ internal class NewFieldRemapper(
         fieldHolder.finishClass()
     }
     
-    private fun addField(prop: KProperty<*>) {
+    private fun addField(prop: KmProperty) {
         val target = patch.target
         var name = prop.name
         val desc = prop.desc
@@ -91,7 +91,7 @@ internal class NewFieldRemapper(
         val field = FieldNode(ACC_PUBLIC, name, desc, null, null)
         target.fields.add(field)
         
-        if (prop !is KMutableProperty<*>) {
+        if (!prop.isVar) {
             field.accessWrapper.setFinal(true)
             mappings.addRemap(prop, insnListOf(FieldInsnNode(GETFIELD, target.name, name, desc)))
         } else {
@@ -99,7 +99,7 @@ internal class NewFieldRemapper(
         }
     }
     
-    private fun proxyField(prop: KProperty<*>) {
+    private fun proxyField(prop: KmProperty) {
         val key = prop.name + prop.desc
         logger.debug("- Redirecting field calls of $key to ByteBaseFieldHolder.")
         fieldHolder.addNeededType(prop)
@@ -109,7 +109,7 @@ internal class NewFieldRemapper(
         val clazz: ClassWrapper
     ) {
         
-        private val propByType = Int2ObjectOpenHashMap<MutableList<KProperty<*>>>()
+        private val propByType = Int2ObjectOpenHashMap<MutableList<KmProperty>>()
         
         fun init() {
             val identityMap = FieldNode(ACC_PRIVATE or ACC_FINAL or ACC_STATIC, "IDENTITY_MAP", "L${Object2IntMap::class.internalName};", null, null)
@@ -137,7 +137,7 @@ internal class NewFieldRemapper(
             }
         }
         
-        fun addNeededType(prop: KProperty<*>) {
+        fun addNeededType(prop: KmProperty) {
             val type = prop.desc
             val sort = Type.getType(type).getHolderSort()
             propByType.getOrPut(sort, ::ObjectArrayList).add(prop)
@@ -158,7 +158,7 @@ internal class NewFieldRemapper(
                         if (actualType.sort >= Type.ARRAY)
                             checkCast(actualType.internalName)
                     }
-                    if (prop !is KMutableProperty<*>) {
+                    if (!prop.isVar) {
                         mappings.addRemap(prop, getter)
                         return@forEach
                     }
@@ -186,7 +186,7 @@ internal class NewFieldRemapper(
                             ldc(props.size)
                             invokeStatic(clazz.name, getName, getDesc)
                         }
-                        if (prop !is KMutableProperty<*>) {
+                        if (!prop.isVar) {
                             mappings.addRemap(prop, getter)
                             return@forEach
                         }

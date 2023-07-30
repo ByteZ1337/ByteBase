@@ -1,5 +1,7 @@
 package xyz.xenondevs.bytebase.patch.patcher.kotlin.remapper.impl
 
+import kotlinx.metadata.KmProperty
+import kotlinx.metadata.isVar
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.FieldInsnNode
@@ -19,6 +21,7 @@ import xyz.xenondevs.bytebase.patch.patcher.kotlin.remapper.PropertyRemapper
 import xyz.xenondevs.bytebase.patch.util.RuntimeClassPath
 import xyz.xenondevs.bytebase.patch.util.StringUtils.possessive
 import xyz.xenondevs.bytebase.patch.util.UnsafeAccess
+import xyz.xenondevs.bytebase.patch.util.desc
 import xyz.xenondevs.bytebase.util.accessWrapper
 import xyz.xenondevs.bytebase.util.desc
 import xyz.xenondevs.bytebase.util.internalName
@@ -38,7 +41,7 @@ internal class FieldAccessorRemapper(
     
     val logger get() = patcher.logger
     
-    override fun <T> processProperty(annotation: FieldAccessor, prop: KProperty<T>) {
+    override fun processProperty(annotation: FieldAccessor, prop: KmProperty) {
         val target = patch.target
         
         val name = annotation.name.ifEmpty(prop::name)
@@ -60,7 +63,7 @@ internal class FieldAccessorRemapper(
         
         // Get the getter and setter instructions and add them to the mappings
         val getterInsns = getCorrectGetter(fieldRef, fieldRef.resolveField().accessWrapper, isAccessible)
-        if (prop is KMutableProperty<*>) {
+        if (prop.isVar) {
             val setterInsn = getCorrectSetter(fieldRef, fieldRef.resolveField().accessWrapper, isAccessible, isMutable)
             mappings.addRemap(prop, getterInsns, setterInsn)
         } else {
@@ -71,11 +74,11 @@ internal class FieldAccessorRemapper(
     private fun tryFixAccess(
         ref: MemberReference,
         access: ReferencingAccess,
-        prop: KProperty<*>
+        prop: KmProperty
     ): Pair<Boolean, Boolean> { // isAccessible, isMutable
         logger.debug("-- Checking access of field \"${ref.name}\"")
         val target = patch.target
-        val shouldBeMutable = prop is KMutableProperty<*>
+        val shouldBeMutable = prop.isVar
         
         var isAccessible = target.canAccess(ref, access, assertInSuper = true)
         var isMutable = !access.isFinal()
@@ -94,12 +97,13 @@ internal class FieldAccessorRemapper(
                 access.setFinal(false)
                 isMutable = true
                 if (access.isStatic()) {
-                    val type = Type.getType(prop.returnType.javaType.representedClass)
-                    if (type.sort < Type.ARRAY || type.descriptor == "Ljava/lang/String;") {
-                        logger.warn("-- Field \"${ref.name}\" was made mutable but is static and has a primitive or string type.")
-                        logger.warn("-- Any changes to the field will not be visible to already compiled classes.")
-                        logger.warn("-- Javac inlines such fields and no actual field access occurs during runtime.")
-                    }
+//                    TODO
+//                    val type = Type.getType(prop.returnType.javaType.representedClass)
+//                    if (type.sort < Type.ARRAY || type.descriptor == "Ljava/lang/String;") {
+//                        logger.warn("-- Field \"${ref.name}\" was made mutable but is static and has a primitive or string type.")
+//                        logger.warn("-- Any changes to the field will not be visible to already compiled classes.")
+//                        logger.warn("-- Javac inlines such fields and no actual field access occurs during runtime.")
+//                    }
                 }
             }
         }

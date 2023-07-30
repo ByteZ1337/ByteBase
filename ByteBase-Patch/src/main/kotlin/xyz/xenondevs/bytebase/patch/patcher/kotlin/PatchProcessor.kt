@@ -13,11 +13,11 @@ internal class PatchProcessor(
     
     val logger get() = patcher.logger
     
-    private val fieldRemapper = FieldRemapper(patcher, patch)
-    private val methodPatcher = MethodPatcher(patcher, patch) { fieldRemapper.remap(it) }
+    private val memberRemapper = MemberRemapper(patcher, patch)
+    private val methodPatcher = MethodPatcher(patcher, patch) { memberRemapper.remap(it) }
     
     fun runPatches() {
-        fieldRemapper.generateMappings()
+        memberRemapper.generateMappings()
         methodPatcher.patchMethods()
     }
     

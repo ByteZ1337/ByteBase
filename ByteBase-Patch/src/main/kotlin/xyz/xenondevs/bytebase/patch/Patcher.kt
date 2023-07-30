@@ -3,11 +3,14 @@ package xyz.xenondevs.bytebase.patch
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
+import kotlinx.metadata.jvm.KotlinClassMetadata
 import xyz.xenondevs.bytebase.INSTRUMENTATION
 import xyz.xenondevs.bytebase.jvm.ClassWrapper
 import xyz.xenondevs.bytebase.patch.logging.PatchLogger
 import xyz.xenondevs.bytebase.patch.logging.SimpleLogger
 import xyz.xenondevs.bytebase.patch.patcher.kotlin.PatchProcessor
+import xyz.xenondevs.bytebase.patch.util.KmClassWrapper
+import xyz.xenondevs.bytebase.patch.util.MetadataUtil
 import kotlin.reflect.KClass
 
 class Patcher(
@@ -27,14 +30,14 @@ class Patcher(
     
     fun addPatch(patch: KClass<*>) = patchList.addPatch(patch)
     
-    fun runPatches(): Map<String, ByteArray> {
-        val newClasses = Object2ObjectOpenHashMap<String, ByteArray>()
+    fun runPatches(): Map<String, ClassDefinition> {
+        val newClasses = Object2ObjectOpenHashMap<String, ClassDefinition>()
         patchList.forEach { patch ->
             logger.debug("")
             logger.debugLine()
             logger.debug("Running patch \"${patch.patchClass.simpleName}\" on \"${patch.target.name}\"")
             PatchProcessor(this, patch).runPatches()
-            newClasses[patch.target.name] = patch.target.assemble()
+            newClasses[patch.target.name] = ClassDefinition(patch.target.name, patch.target.assemble(), patch.patchMode)
             logger.debugLine()
         }
         return newClasses
@@ -47,6 +50,11 @@ class Patcher(
         val patchWrapper: ClassWrapper,
         val patchMode: PatchMode
     ) : Comparable<LoadedPatch> {
+        
+        val kmClass = KmClassWrapper(patchWrapper)
+        
+        val patchMetadata = (MetadataUtil.getMetadata(patchWrapper) as KotlinClassMetadata.Class?)?.kmClass
+            ?: throw IllegalArgumentException("Patch class must be a Kotlin class!")
         
         init {
             require(patchMode != PatchMode.AUTOMATIC) { "PatchMode.AUTOMATIC is not allowed for LoadedPatch! This should have been resolved by now!" }
@@ -70,5 +78,11 @@ class Patcher(
         }
         
     }
+    
+    class ClassDefinition(
+        val name: String,
+        val bytecode: ByteArray,
+        val patchMode: PatchMode
+    )
     
 }

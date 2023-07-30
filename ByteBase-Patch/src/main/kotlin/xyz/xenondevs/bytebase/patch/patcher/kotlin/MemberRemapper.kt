@@ -6,32 +6,35 @@ import org.objectweb.asm.tree.MethodInsnNode
 import org.objectweb.asm.tree.MethodNode
 import xyz.xenondevs.bytebase.jvm.ClassWrapper
 import xyz.xenondevs.bytebase.patch.Patcher
+import xyz.xenondevs.bytebase.patch.patcher.kotlin.remapper.FieldRemapperType
 import xyz.xenondevs.bytebase.patch.patcher.kotlin.remapper.MappingsContainer
 import xyz.xenondevs.bytebase.patch.patcher.kotlin.remapper.NonAnnotatedPropertyRemapper
 import xyz.xenondevs.bytebase.patch.patcher.kotlin.remapper.PropertyRemapper
 import xyz.xenondevs.bytebase.patch.patcher.kotlin.remapper.Remapper
-import xyz.xenondevs.bytebase.patch.patcher.kotlin.remapper.RemapperType
+import xyz.xenondevs.bytebase.patch.util.defineClass
+import xyz.xenondevs.bytebase.patch.util.resolveAnnotations
 import java.io.File
 import kotlin.reflect.KClass
-import kotlin.reflect.full.declaredMemberProperties
 
-internal class FieldRemapper(
+internal class MemberRemapper(
     val patcher: Patcher,
     val patch: Patcher.LoadedPatch
 ) {
     
     val logger get() = patcher.logger
     
-    private val remappers = Object2ObjectOpenHashMap<KClass<out Annotation>?, Remapper<*>>()
-    private val mappings = MappingsContainer()
+    private val fieldRemappers = Object2ObjectOpenHashMap<KClass<out Annotation>?, Remapper<*>>()
+    private val functionRemappers = Object2ObjectOpenHashMap<KClass<out Annotation>?, Remapper<*>>()
+    private val mappings = MappingsContainer(patch)
     private val newDefs = Object2ObjectOpenHashMap<String, ClassWrapper>()
     
     @Suppress("UNCHECKED_CAST")
     fun generateMappings() {
-        patch.patchClass.declaredMemberProperties.forEach { prop ->
-            val annotation = prop.annotations.firstOrNull()
-            val remapper = remappers.getOrPut(annotation?.annotationClass) {
-                RemapperType.getRemapper(annotation, patcher, patch, mappings, newDefs) ?: return@forEach
+        val patchClass = patch.patchClass
+        patch.patchMetadata.properties.forEach { prop ->
+            val annotation = prop.resolveAnnotations(patchClass.java).firstOrNull()
+            val remapper = fieldRemappers.getOrPut(annotation?.annotationClass) {
+                FieldRemapperType.getRemapper(annotation, patcher, patch, mappings, newDefs) ?: return@forEach
             }
             
             if (remapper is NonAnnotatedPropertyRemapper)
@@ -39,8 +42,11 @@ internal class FieldRemapper(
             else if (remapper is PropertyRemapper<*>)
                 (remapper as PropertyRemapper<Annotation>).processProperty(annotation!!, prop)
         }
-        remappers.values.forEach { it.finish() }
-        newDefs.forEach { (_, clazz) -> File(clazz.className + ".class").writeBytes(clazz.assemble()) }
+        fieldRemappers.values.forEach(Remapper<*>::finish)
+        newDefs.forEach { (_, clazz) ->
+            File(clazz.className + ".class").writeBytes(clazz.assemble())
+            this::class.java.classLoader.defineClass(clazz)
+        }
     }
     
     fun remap(method: MethodNode) {
