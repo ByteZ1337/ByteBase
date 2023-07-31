@@ -3,14 +3,12 @@ package xyz.xenondevs.bytebase.patch
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.ObjectArrayList
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
-import kotlinx.metadata.jvm.KotlinClassMetadata
 import xyz.xenondevs.bytebase.INSTRUMENTATION
 import xyz.xenondevs.bytebase.jvm.ClassWrapper
 import xyz.xenondevs.bytebase.patch.logging.PatchLogger
 import xyz.xenondevs.bytebase.patch.logging.SimpleLogger
 import xyz.xenondevs.bytebase.patch.patcher.kotlin.PatchProcessor
 import xyz.xenondevs.bytebase.patch.util.KmClassWrapper
-import xyz.xenondevs.bytebase.patch.util.MetadataUtil
 import kotlin.reflect.KClass
 
 class Patcher(
@@ -51,10 +49,9 @@ class Patcher(
         val patchMode: PatchMode
     ) : Comparable<LoadedPatch> {
         
-        val kmClass = KmClassWrapper(patchWrapper)
+        val metadataWrapper = KmClassWrapper(patchWrapper)
         
-        val patchMetadata = (MetadataUtil.getMetadata(patchWrapper) as KotlinClassMetadata.Class?)?.kmClass
-            ?: throw IllegalArgumentException("Patch class must be a Kotlin class!")
+        val kmClass = metadataWrapper.kmClass
         
         init {
             require(patchMode != PatchMode.AUTOMATIC) { "PatchMode.AUTOMATIC is not allowed for LoadedPatch! This should have been resolved by now!" }
