@@ -98,12 +98,12 @@ object RuntimeUtils {
         val constructor = clazz.primaryConstructor
             ?: throw IllegalArgumentException("Class ${clazz.internalName} has no primary constructor")
         
-        val params = LinkedHashMap<KParameter, Any>()
+        val params = LinkedHashMap<KParameter, Any?>()
         
         constructor.parameters.forEach { param ->
             val name = param.name!!
             if (name in map) {
-                params[param] = constructValueFromMap(param.type, map[name]!!)
+                params[param] = constructValueFromMap(param.type, map[name])
             } else {
                 val default = javaClass.getMethod(name).defaultValue
                 requireNotNull(default) { "Parameter $name is not present in the map and has no default value!" }
@@ -120,20 +120,22 @@ object RuntimeUtils {
     inline fun <reified A : Annotation> constructAnnotation(map: Map<String, Any?>) = constructAnnotation(A::class, map)
     
     @Suppress("UNCHECKED_CAST")
-    private fun constructValueFromMap(type: KType, value: Any, nonPrimitive: Boolean = false): Any {
+    private fun constructValueFromMap(type: KType, value: Any?, nonPrimitive: Boolean = false): Any? {
+        if (value == null) return null
+        
         if (!nonPrimitive) {
             when (type) {
                 typeOf<Int>() -> return value as Int
                 typeOf<IntArray>() -> return (value as List<Int>).toIntArray()
-                typeOf<Long>() -> return (value as Long)
+                typeOf<Long>() -> return value as Long
                 typeOf<LongArray>() -> return (value as List<Long>).toLongArray()
-                typeOf<Float>() -> return (value as Float)
+                typeOf<Float>() -> return value as Float
                 typeOf<FloatArray>() -> return (value as List<Float>).toFloatArray()
-                typeOf<Double>() -> return (value as Double)
+                typeOf<Double>() -> return value as Double
                 typeOf<DoubleArray>() -> return (value as List<Double>).toDoubleArray()
-                typeOf<Short>() -> return (value as Short)
+                typeOf<Short>() -> return value as Short
                 typeOf<ShortArray>() -> return (value as List<Short>).toShortArray()
-                typeOf<Byte>() -> return (value as Byte)
+                typeOf<Byte>() -> return value as Byte
                 typeOf<ByteArray>() -> return (value as List<Byte>).toByteArray()
                 typeOf<Char>() -> return value as Char
                 typeOf<CharArray>() -> return (value as List<Char>).toCharArray()
