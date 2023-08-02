@@ -8,6 +8,7 @@ import java.lang.reflect.Field
 import java.lang.reflect.GenericArrayType
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.WildcardType
+import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.jvm.javaType
 import java.lang.reflect.Type as ReflectType
@@ -113,6 +114,23 @@ fun Type.arrayStoreInsn(): AbstractInsnNode = buildInsnList {
         else -> throw IllegalStateException("Unknown type $this")
     }
 }.first
+
+val Type.runtimeClass: KClass<*>
+    get() {
+        return when (sort) {
+            Type.BOOLEAN -> Boolean::class
+            Type.CHAR -> Char::class
+            Type.BYTE -> Byte::class
+            Type.SHORT -> Short::class
+            Type.INT -> Int::class
+            Type.FLOAT -> Float::class
+            Type.LONG -> Long::class
+            Type.DOUBLE -> Double::class
+            Type.ARRAY -> Array::class
+            Type.OBJECT -> Class.forName(internalName.replace('/', '.')).kotlin
+            else -> throw IllegalStateException("Unknown type $this")
+        }
+    }
 
 object TypeUtils {
     

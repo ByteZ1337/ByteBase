@@ -10,18 +10,42 @@ import kotlinx.metadata.jvm.fieldSignature
 import kotlinx.metadata.jvm.getterSignature
 import kotlinx.metadata.jvm.signature
 import kotlinx.metadata.jvm.syntheticMethodForAnnotations
+import xyz.xenondevs.bytebase.RuntimeUtils
 import xyz.xenondevs.bytebase.jvm.ClassWrapper
+import xyz.xenondevs.bytebase.patch.util.StringUtils.dropBi
 import xyz.xenondevs.bytebase.util.toMap
+import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
+
+internal fun KmProperty.resolveAnnotations(clazz: ClassWrapper): List<Annotation> {
+    if (!hasAnnotations) return emptyList()
+    return resolveAnnotations(clazz, syntheticMethodForAnnotations!!.toString(), "Could not find synthetic method for annotations")
+}
+
+internal fun KmFunction.resolveAnnotations(clazz: ClassWrapper): List<Annotation> {
+    if (!hasAnnotations) return emptyList()
+    return resolveAnnotations(clazz, signature!!.toString(), "Could not find method for annotations")
+}
+
+@Suppress("UNCHECKED_CAST")
+internal fun resolveAnnotations(
+    clazz: ClassWrapper,
+    methodSignature: String,
+    error: String
+): List<Annotation> {
+    val method = clazz.getMethod(methodSignature, true)
+        ?: throw IllegalStateException(error)
+    return method.visibleAnnotations.map {
+        val annotClass = Class.forName(it.desc.dropBi(1).replace('/', '.')).kotlin as KClass<Annotation>
+        return@map RuntimeUtils.constructAnnotation(annotClass, it.toMap())
+    }
+}
+
+operator fun ClassWrapper.get(func: KmFunction) =
+    getMethod(func.signature!!.toString(), includesDesc = true)
 
 internal val KmProperty.desc: String
     get() = fieldSignature?.descriptor ?: getterSignature!!.descriptor.drop(2)
-
-internal fun KmProperty.resolveAnnotations(clazz: Class<*>): List<Annotation> {
-    if (!hasAnnotations) return emptyList()
-    val method = clazz.getMethod(syntheticMethodForAnnotations!!.name)
-    return method.annotations.toList()
-}
 
 internal val KmFunction.desc: String
     get() = signature!!.descriptor.drop(2)

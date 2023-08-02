@@ -1,5 +1,6 @@
 package xyz.xenondevs.bytebase.patch.patcher.kotlin
 
+import kotlinx.metadata.KmFunction
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.FrameNode
@@ -10,12 +11,13 @@ import org.objectweb.asm.tree.MethodNode
 import org.objectweb.asm.util.Textifier
 import org.objectweb.asm.util.TraceMethodVisitor
 import xyz.xenondevs.bytebase.asm.buildInsnList
-import xyz.xenondevs.bytebase.jvm.VirtualClassPath
 import xyz.xenondevs.bytebase.patch.Patcher
 import xyz.xenondevs.bytebase.patch.annotation.Inject
 import xyz.xenondevs.bytebase.patch.annotation.Replace
 import xyz.xenondevs.bytebase.patch.annotation.target.At
 import xyz.xenondevs.bytebase.patch.annotation.target.Position
+import xyz.xenondevs.bytebase.patch.util.get
+import xyz.xenondevs.bytebase.patch.util.resolveAnnotations
 import xyz.xenondevs.bytebase.util.copy
 import xyz.xenondevs.bytebase.util.insertBefore
 import xyz.xenondevs.bytebase.util.nextLabelOrNull
@@ -23,10 +25,6 @@ import xyz.xenondevs.bytebase.util.previousLabel
 import xyz.xenondevs.bytebase.util.replaceRange
 import java.io.PrintWriter
 import java.io.StringWriter
-import kotlin.reflect.KFunction
-import kotlin.reflect.full.declaredMemberFunctions
-import kotlin.reflect.full.findAnnotation
-import kotlin.reflect.jvm.javaMethod
 
 internal class MethodPatcher(
     val patcher: Patcher,
@@ -38,37 +36,39 @@ internal class MethodPatcher(
     
     fun patchMethods() {
         logger.debug("Patching methods")
-        patch.patchClass.declaredMemberFunctions.forEach { function ->
-            val replaceAnnotation = function.findAnnotation<Replace>()
+        patch.kmClass.functions.forEach { function ->
+            val annotations = function.resolveAnnotations(patch.patchWrapper).associateBy { it::class }
+            val replaceAnnotation = annotations[Replace::class]
             if (replaceAnnotation != null) {
-                replaceMethod(function, replaceAnnotation)
-                return
+                replaceMethod(function, replaceAnnotation as Replace)
+                return@forEach
             }
-            val injectAnnotation = function.findAnnotation<Inject>()
+            
+            val injectAnnotation = annotations[Inject::class]
             if (injectAnnotation != null) {
-                injectMethod(function, injectAnnotation)
-                return
+                injectMethod(function, injectAnnotation as Inject)
+                return@forEach
             }
         }
     }
     
-    private fun replaceMethod(function: KFunction<*>, replaceAnnotation: Replace) {
+    private fun replaceMethod(function: KmFunction, replaceAnnotation: Replace) {
         logger.debugLine()
         logger.debug("- Replacing method instructions of \"${function.name}\" with instructions of \"${replaceAnnotation.target}\"")
         val target = getAndRemoveTarget(replaceAnnotation.target)
-        val patchedMethod = VirtualClassPath[function.javaMethod!!]
+        val patchedMethod = patch.patchWrapper[function]!!
         val newMethod = MethodNode(target.access, target.name, target.desc, null, null).apply { this.instructions = patchedMethod.instructions.copy() }
         fieldCallRemapper(newMethod)
         patch.target.methods.add(newMethod)
     }
     
-    private fun injectMethod(function: KFunction<*>, inject: Inject) {
+    private fun injectMethod(function: KmFunction, inject: Inject) {
         logger.debugLine()
         logger.debug("- Injecting instructions of \"${function.name}\" into \"${inject.target}\" at specified position")
         val target = getAndRemoveTarget(inject.target)
         val at = inject.at
         val instructions = target.instructions.copy()
-        val injectedInstructions = VirtualClassPath[function.javaMethod!!].instructions.copy().apply { removeAll { it is LineNumberNode } }
+        val injectedInstructions = patch.patchWrapper[function]!!.instructions.copy().apply { removeAll { it is LineNumberNode } }
         
         var returnLabel: AbstractInsnNode? = null
         

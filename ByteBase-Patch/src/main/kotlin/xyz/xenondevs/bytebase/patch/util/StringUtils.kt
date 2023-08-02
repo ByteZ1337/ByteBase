@@ -17,6 +17,9 @@ internal object StringUtils {
         return substring(startIndex, endIndex)
     }
     
+    fun String.dropBi(fromStart: Int, fromEnd: Int = fromStart) =
+        substring(fromStart, length - fromEnd)
+    
     fun String.capitalize() = replaceFirstChar { it.uppercaseChar() }
     
 }

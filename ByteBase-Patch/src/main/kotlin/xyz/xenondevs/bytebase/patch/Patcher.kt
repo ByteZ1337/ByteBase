@@ -33,7 +33,7 @@ class Patcher(
         patchList.forEach { patch ->
             logger.debug("")
             logger.debugLine()
-            logger.debug("Running patch \"${patch.patchClass.simpleName}\" on \"${patch.target.name}\"")
+            logger.debug("Running patch \"${patch.fullName}\" on \"${patch.target.name}\"")
             PatchProcessor(this, patch).runPatches()
             newClasses[patch.target.name] = ClassDefinition(patch.target.name, patch.target.assemble(), patch.patchMode)
             logger.debugLine()
@@ -44,7 +44,6 @@ class Patcher(
     internal class LoadedPatch(
         val target: ClassWrapper,
         val priority: UInt,
-        val patchClass: KClass<*>,
         val patchWrapper: ClassWrapper,
         val patchMode: PatchMode
     ) : Comparable<LoadedPatch> {
@@ -52,6 +51,9 @@ class Patcher(
         val metadataWrapper = KmClassWrapper(patchWrapper)
         
         val kmClass = metadataWrapper.kmClass
+        
+        val name = patchWrapper.className
+        val fullName = patchWrapper.name!!
         
         init {
             require(patchMode != PatchMode.AUTOMATIC) { "PatchMode.AUTOMATIC is not allowed for LoadedPatch! This should have been resolved by now!" }
@@ -67,11 +69,11 @@ class Patcher(
             
             other as LoadedPatch
             
-            return patchClass == other.patchClass
+            return fullName == other.fullName
         }
         
         override fun hashCode(): Int {
-            return patchClass.hashCode()
+            return fullName.hashCode()
         }
         
     }

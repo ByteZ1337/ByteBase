@@ -30,9 +30,8 @@ internal class MemberRemapper(
     
     @Suppress("UNCHECKED_CAST")
     fun generateMappings() {
-        val patchClass = patch.patchClass
         patch.kmClass.properties.forEach { prop ->
-            val annotation = prop.resolveAnnotations(patchClass.java).firstOrNull()
+            val annotation = prop.resolveAnnotations(patch.patchWrapper).firstOrNull()
             val remapper = fieldRemappers.getOrPut(annotation?.annotationClass) {
                 FieldRemapperType.getRemapper(annotation, patcher, patch, mappings, newDefs) ?: return@forEach
             }

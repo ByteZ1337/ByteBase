@@ -32,7 +32,7 @@ internal class PatchList : Iterable<Patcher.LoadedPatch> {
         val targetName = annotation.target.replace('.', '/')
         try {
             val target = VirtualClassPath[targetName]
-            patches += Patcher.LoadedPatch(target, annotation.priority, patchClass, VirtualClassPath[patchClass], annotation.patchMode.getActualMode(targetName))
+            patches += Patcher.LoadedPatch(target, annotation.priority, VirtualClassPath[patchClass], annotation.patchMode.getActualMode(targetName))
         } catch (ex: IllegalStateException) {
             if (ex.cause is ClassNotFoundException || ex.cause is NoClassDefFoundError) {
                 throw IllegalStateException("Could not find target class $targetName for patch ${patchClass.qualifiedName}", ex)
@@ -53,7 +53,7 @@ internal class PatchList : Iterable<Patcher.LoadedPatch> {
         
         try {
             val target = VirtualClassPath[targetName]
-            patches += Patcher.LoadedPatch(target, priority, patchClass, VirtualClassPath[patchClass], patchMode.getActualMode(targetName))
+            patches += Patcher.LoadedPatch(target, priority, VirtualClassPath[patchClass], patchMode.getActualMode(targetName))
         } catch (ex: IllegalStateException) {
             if (ex.cause is ClassNotFoundException || ex.cause is NoClassDefFoundError) {
                 throw IllegalStateException("Could not find target class $targetName for patch ${patchClass.qualifiedName}", ex)
