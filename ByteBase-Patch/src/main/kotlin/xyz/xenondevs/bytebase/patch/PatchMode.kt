@@ -1,7 +1,6 @@
 package xyz.xenondevs.bytebase.patch
 
 import xyz.xenondevs.bytebase.patch.PatchMode.*
-import xyz.xenondevs.bytebase.patch.patcher.kotlin.FieldHolder
 import xyz.xenondevs.bytebase.patch.util.RuntimeClassPath
 import xyz.xenondevs.bytebase.patch.util.UnsafeAccess
 import java.lang.invoke.MethodHandle
@@ -45,9 +44,8 @@ enum class PatchMode {
      *
      * ### Adding a new field or method
      *
-     * * For new fields, ByteBase will redirect all field calls to the [FieldHolder] class. This class will then allocate
-     * memory for primitives and save their address in a [Map] for later access. For non-primitive fields, the
-     * [FieldHolder] will store the reference to the object in a different [Map]. Everything is saved using
+     * * For new fields, ByteBase will redirect all field calls to the ByteBaseFieldHolder class. This class will then
+     * store field values in specific fastutil [Map] implementations. Everything is saved using
      * [WeakReferences][WeakReference] to prevent any memory leaks.
      *
      * * For new methods, ByteBase will treat everything as a static method, similarly to how the Kotlin compiler

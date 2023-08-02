@@ -37,7 +37,7 @@ internal class MethodPatcher(
     fun patchMethods() {
         logger.debug("Patching methods")
         patch.kmClass.functions.forEach { function ->
-            val annotations = function.resolveAnnotations(patch.patchWrapper).associateBy { it::class }
+            val annotations = function.resolveAnnotations(patch.patchWrapper).associateBy { it.annotationClass }
             val replaceAnnotation = annotations[Replace::class]
             if (replaceAnnotation != null) {
                 replaceMethod(function, replaceAnnotation as Replace)
