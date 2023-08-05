@@ -171,6 +171,7 @@ internal class NewFieldRemapper(
                         invokeStatic(System::identityHashCode)
                         swap()
                         invokeVirtual(desc.between('L', ';'), "put", "(I$actualDesc)$actualDesc")
+                        pop()
                     }
                     mappings.addRemap(prop, getter, setter)
                 } else {
@@ -220,7 +221,7 @@ internal class NewFieldRemapper(
             if (clazz.getField(mapName, mapType) != null)
                 return mapName to mapType
             
-            val mapField = FieldNode(ACC_PRIVATE or ACC_FINAL or ACC_STATIC, mapName, mapType, null, null)
+            val mapField = FieldNode(ACC_PUBLIC or ACC_FINAL or ACC_STATIC, mapName, mapType, null, null)
             clazz.fields.add(mapField)
             
             val insns = clazz.getOrCreateClassInit().instructions
