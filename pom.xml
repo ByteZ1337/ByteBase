@@ -6,7 +6,7 @@
 
     <groupId>xyz.xenondevs.bytebase</groupId>
     <artifactId>ByteBase-Parent</artifactId>
-    <version>0.4.6</version>
+    <version>0.4.7</version>
     <modules>
         <module>ByteBase</module>
         <module>ByteBase-Runtime</module>

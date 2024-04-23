@@ -5,7 +5,7 @@
     <parent>
         <artifactId>ByteBase-Parent</artifactId>
         <groupId>xyz.xenondevs.bytebase</groupId>
-        <version>0.4.6</version>
+        <version>0.4.7</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
