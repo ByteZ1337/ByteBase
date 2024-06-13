@@ -375,6 +375,7 @@ class InsnBuilder {
     fun getStatic(owner: String, name: String, desc: String) = getField(GETSTATIC, owner, name, desc)
     fun getStatic(field: Field) = getField(GETSTATIC, field)
     fun getStatic(kProperty: KProperty<*>) = getField(GETSTATIC, kProperty)
+    fun getStatic(enum: Enum<*>) = getStatic(enum.javaClass.internalName, enum.name, enum.javaClass.descriptorString())
     fun putStatic(owner: String, name: String, desc: String) = getField(PUTSTATIC, owner, name, desc)
     fun putStatic(field: Field) = getField(PUTSTATIC, field)
     fun putStatic(kProperty: KProperty<*>) = getField(PUTSTATIC, kProperty)
